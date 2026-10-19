@@ -71,11 +71,8 @@ export function Review() {
   return (
     <section id="regions">
       <div className="lede">
-        <h2>Regions.</h2>{' '}
-        <p>
-          Highlight any stretch of time. Here the long pauses in a speech are marked for cutting. Keep or cut each one,
-          then press play to hear the result.
-        </p>
+        <h2>Regions</h2>
+        <p><code>Waveform.Region</code> marks a span of time. Here <code>findSilences</code> finds the pauses in a speech; cut or keep each one, then play the result.</p>
       </div>
       <div className="wide review">
         <div className="plate">

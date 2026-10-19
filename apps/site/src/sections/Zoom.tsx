@@ -125,11 +125,8 @@ export function Zoom() {
   return (
     <section id="zoom">
       <div className="lede">
-        <h2>Long files.</h2>{' '}
-        <p>
-          A full hour, and every second of it. Pinch or scroll sideways to zoom from the whole recording down to a
-          single word, and drag to move around.
-        </p>
+        <h2>Long files</h2>
+        <p>An hour-long recording. Pinch or scroll sideways to zoom, drag to pan. <code>store.setView(start, end)</code> sets the visible range.</p>
       </div>
       <div className="wide">
         <div className="plate">

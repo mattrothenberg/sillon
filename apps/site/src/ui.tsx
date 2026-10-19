@@ -49,6 +49,20 @@ export function Seg<T extends string>({ value, options, onChange, label, small }
 
 export { Code, CodeTabs } from './code'
 
+const INSTALL = 'npm install @sillon/react'
+
+/** The install command, with a copy button. */
+export function Install() {
+  const [copied, setCopied] = useState(false)
+  const copy = () => navigator.clipboard?.writeText(INSTALL).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1600) }, () => {})
+  return (
+    <div className="install">
+      <code><span aria-hidden>$ </span>{INSTALL}</code>
+      <button className="install-copy" onClick={copy} aria-label="Copy install command">{copied ? 'Copied' : 'Copy'}</button>
+    </div>
+  )
+}
+
 /** "0:12 / 2:02", written straight to the DOM while playing. */
 export function PlayerTime({ player }: { player: Player }) {
   const { duration } = usePlayerState(player)

@@ -102,11 +102,8 @@ export function Comments() {
   return (
     <section id="comments">
       <div className="lede">
-        <h2>Comments.</h2>{' '}
-        <p>
-          Pin anything to a moment and show it as the track plays. When comments crowd together they share a marker;
-          click one to zoom in and they move apart.
-        </p>
+        <h2>Comments</h2>
+        <p><code>Waveform.Marker</code> pins anything to a time. <code>useGroups</code> merges markers that would overlap at the current zoom, and <code>useActive</code> returns what the playhead just passed. Click a group to zoom in.</p>
       </div>
       <div className="plate comments">
         <Deck player={player} label={MUSIC_TITLE}>

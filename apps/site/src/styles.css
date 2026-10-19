@@ -1,3 +1,12 @@
+/* Paper Mono (OFL), self-hosted, as on Formulaire's site. */
+@font-face {
+  font-family: 'Paper Mono';
+  src: url('./fonts/PaperMono.woff2') format('woff2');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --paper: #fcfbf9;
   --plate: #f3f1ed;
@@ -16,10 +25,10 @@
   --lift: 0 1px 2px rgb(15 14 12 / 0.07), 0 0 0 1px rgb(15 14 12 / 0.05);
   color-scheme: light;
 
-  --sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
-  --mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+  --sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
+  --mono: 'Paper Mono', ui-monospace, 'SF Mono', monospace;
   /* One column for everything: text, demos and code share a left edge. */
-  --col: 720px;
+  --col: 760px;
   --text: 600px;
   --gutter: 24px;
 }
@@ -65,26 +74,47 @@ code { font: 400 0.88em var(--mono); }
 
 /* ------------------------------------------------------------ page */
 
-.top, .frame { max-width: calc(var(--col) + 2 * var(--gutter)); margin: 0 auto; padding-inline: var(--gutter); }
-.top { display: flex; align-items: center; gap: 24px; padding-block: 28px; }
-.wordmark { font-weight: 500; text-decoration: none; margin-right: auto; }
-.top nav { display: flex; gap: 22px; font-size: 15px; color: var(--ink-2); }
-.top nav a { text-decoration: none; white-space: nowrap; }
+/* A sticky sidebar of chapters beside one reading column. */
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+.layout { display: grid; grid-template-columns: 272px minmax(0, 1fr); min-height: 100vh; }
+.side { border-right: 1px solid var(--rule); }
+.side-inner { position: sticky; top: 0; display: flex; flex-direction: column; height: 100vh; overflow-y: auto; padding: 44px 28px 28px 40px; }
+.wordmark { font-weight: 500; font-size: 19px; letter-spacing: -0.01em; text-decoration: none; width: fit-content; }
+.side-note { margin: 6px 0 0; font-size: 14px; line-height: 1.45; color: var(--ink-3); }
+.chapters { margin-top: 44px; padding-top: 28px; border-top: 1px solid var(--rule); }
+.chapters ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.chapters a { display: flex; align-items: baseline; gap: 14px; padding: 5px 0; font-size: 15px; color: var(--ink-2); text-decoration: none; }
+.chapters a:hover { color: var(--ink); }
+.chapters a[aria-current] { color: var(--ink); }
+.chapter-n { display: inline-grid; place-items: center; width: 18px; flex: none; font: 400 12px/1 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.chapters a[aria-current] .chapter-n { color: var(--accent); }
+.side-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: auto; padding-top: 28px; }
 .theme-toggle {
   display: grid; place-items: center; width: 36px; height: 36px; margin: -8px -8px -8px 0; padding: 0; flex: none;
   border: 0; border-radius: 999px; background: none; color: var(--ink-2); cursor: pointer;
 }
 .theme-toggle:hover { background: var(--plate); color: var(--ink); }
-.top nav a:hover { color: var(--ink); }
-@media (max-width: 720px) { .top nav { display: none; } }
 
-main > section { padding-top: 120px; }
-@media (max-width: 640px) { main > section { padding-top: 88px; } }
+.frame { width: 100%; max-width: calc(var(--col) + 2 * var(--pad)); padding-inline: var(--pad); --pad: 72px; }
+main > section { margin-top: 88px; padding-top: 72px; border-top: 1px solid var(--rule); scroll-margin-top: 0; }
+main > section.hero { margin-top: 0; padding-top: 112px; border-top: 0; }
 
-/* Headings are set apart by colour, not size. */
+/* Narrow screens: the sidebar becomes a top bar, and the chapters step aside. */
+@media (max-width: 960px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+  .side { border-right: 0; border-bottom: 1px solid var(--rule); }
+  .side-inner { position: static; height: auto; flex-direction: row; align-items: center; padding: 18px var(--gutter); }
+  .side-note, .chapters { display: none; }
+  .side-foot { margin: 0 0 0 auto; padding: 0; }
+  .frame { --pad: var(--gutter); margin: 0 auto; }
+  main > section.hero { padding-top: 56px; }
+}
+@media (max-width: 640px) { main > section { margin-top: 64px; padding-top: 56px; } }
+
 .lede { max-width: var(--text); margin-bottom: 36px; }
-.lede h1, .lede h2 { display: inline; font: inherit; font-weight: 500; margin: 0; color: var(--ink); }
-.lede p { display: inline; margin: 0; color: var(--ink-2); }
+.lede h2 { margin: 0; font-size: 26px; line-height: 1.25; font-weight: 600; letter-spacing: -0.015em; color: var(--ink); }
+.lede p { margin: 12px 0 0; color: var(--ink-2); }
 .lede code, .usage-note code { color: var(--ink); }
 
 .meta { font: 400 13px/1.5 var(--mono); color: var(--ink-3); font-variant-numeric: tabular-nums; }
@@ -92,11 +122,21 @@ main > section { padding-top: 120px; }
 
 /* ------------------------------------------------------------ hero */
 
-.hero { padding-top: 72px !important; }
-.intro { font-size: 21px; line-height: 1.5; letter-spacing: -0.01em; margin-bottom: 72px; }
+.intro { max-width: 680px; margin-bottom: 72px; }
+.intro h1 { margin: 0; font-size: 40px; line-height: 1.12; font-weight: 600; letter-spacing: -0.02em; color: var(--ink); text-wrap: balance; }
+.intro p { margin: 28px 0 0; max-width: 600px; font-size: 19px; line-height: 1.55; color: var(--ink-2); }
+.install { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: fit-content; max-width: 100%; margin-top: 32px; padding: 8px 8px 8px 16px; border-radius: 10px; background: var(--plate); }
+.install code { font-size: 14px; white-space: nowrap; overflow-x: auto; }
+.install code span { color: var(--ink-3); }
+.install-copy { border: 0; border-radius: 7px; padding: 4px 10px; font: 400 13px/1.5 var(--mono); background: var(--card); color: var(--ink-2); box-shadow: var(--lift); cursor: pointer; min-width: 64px; }
+.install-copy:hover { color: var(--ink); }
 .hero-demo { margin: 0; }
 .credit { margin-top: 40px; }
-@media (max-width: 640px) { .hero { padding-top: 40px !important; } .intro { font-size: 18px; margin-bottom: 48px; } }
+@media (max-width: 640px) {
+  .intro { margin-bottom: 48px; }
+  .intro h1 { font-size: 32px; }
+  .intro p { font-size: 17px; }
+}
 
 /* ------------------------------------------------------------ controls */
 

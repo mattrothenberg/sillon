@@ -55,10 +55,8 @@ export function Themes() {
   return (
     <section id="styling">
       <div className="lede">
-        <h2>Styled with CSS.</h2>{' '}
-        <p>
-          If you can style a div, you can style a waveform: colours, gradients, patterns, even images.
-        </p>
+        <h2>Styling</h2>
+        <p><code>Track</code> and <code>Progress</code> are clipped to the bars, so any CSS background works: a colour, a gradient, a pattern or an image.</p>
       </div>
       <div className="wide">
         <div className="plate">

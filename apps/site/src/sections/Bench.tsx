@@ -105,12 +105,8 @@ export function Bench() {
   return (
     <section id="performance">
       <div className="lede">
-        <h2>Performance.</h2>{' '}
-        <p>
-          sillon shows the first bars within a fraction of a second at any length, and uses a fraction of the memory.
-          Drawing all of a long file takes it longer than wavesurfer.js. Peaks made ahead of time on a server are
-          faster than either, and sillon takes those too.
-        </p>
+        <h2>Performance</h2>
+        <p>Compared with wavesurfer.js on the same files. sillon shows its first bars sooner and uses far less memory; on long files, drawing the whole waveform takes it longer. Peaks computed ahead of time on a server are faster than either.</p>
       </div>
       <div className="bench-head">
         <div className="bench-filters">

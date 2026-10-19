@@ -16,8 +16,8 @@ export function Radial() {
   return (
     <section id="visualizer">
       <div className="lede">
-        <h2>Visualizer.</h2>{' '}
-        <p>Rays around a circle that move with the music as it plays.</p>
+        <h2>Visualizer</h2>
+        <p><code>Visualizer</code> draws the live spectrum of a player while it plays. Its colour is the CSS <code>color</code>.</p>
       </div>
       <div className="wide">
         <div className="disc">

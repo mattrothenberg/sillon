@@ -170,8 +170,8 @@ export function Parts() {
   return (
     <section id="parts">
       <div className="lede">
-        <h2>Parts.</h2>{' '}
-        <p>Each one is its own component. Use the ones you need and style them with CSS.</p>
+        <h2>Components</h2>
+        <p>Every part renders a plain element. Style it with <code>className</code> or <code>style</code>, or leave it out.</p>
       </div>
       <div className="transport parts-transport">
         <PlayButton player={player} label={MUSIC_TITLE} />
