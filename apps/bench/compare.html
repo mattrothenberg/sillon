@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>compare</title>
+<script>
+// Probes start before any library code loads, so bundle evaluation counts too.
+(() => {
+  const P = (window.__probe = { long: [], lag: [], input: [], heap: 0, stop: false })
+  try { new PerformanceObserver((l) => { for (const e of l.getEntries()) P.long.push([e.startTime, e.duration]) }).observe({ type: 'longtask', buffered: true }) } catch {}
+  // Event-loop lag: how late a 20 ms timer fires. Measures main-thread availability in every browser.
+  let expect = performance.now() + 20
+  const tick = () => {
+    const t = performance.now()
+    P.lag.push([t, Math.max(0, t - expect)])
+    if (performance.memory) P.heap = Math.max(P.heap, performance.memory.usedJSHeapSize)
+    expect = t + 20
+    if (!P.stop) setTimeout(tick, 20)
+  }
+  setTimeout(tick, 20)
+  // Input delay: time from the OS event to its handler starting.
+  addEventListener('pointermove', (e) => { if (!P.stop) P.input.push(performance.now() - e.timeStamp) }, { capture: true, passive: true })
+})()
+</script>
+<style>body{margin:0;background:#fff}#wave{width:1200px;height:128px;margin:40px}</style></head>
+<body><div id="wave"></div><script type="module" src="/src/compare.ts"></script></body></html>

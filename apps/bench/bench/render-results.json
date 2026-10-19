@@ -1,0 +1,242 @@
+[
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "wavesurfer",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.09
+  },
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "canvas2d",
+    "fps": 58.6,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0.3,
+    "workMs": 0.53
+  },
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "svg-native",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.04
+  },
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "svg-clip",
+    "fps": 58.4,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0.3,
+    "workMs": 0.03
+  },
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "canvas-mask",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.03
+  },
+  {
+    "throttle": 1,
+    "scenario": "playback",
+    "strategy": "webgl",
+    "fps": 60,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0.3,
+    "workMs": 0.05
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "wavesurfer",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 3.5
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "canvas2d",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.58
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "svg-native",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.44
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "svg-clip",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.47
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "canvas-mask",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 4.27
+  },
+  {
+    "throttle": 1,
+    "scenario": "zoom",
+    "strategy": "webgl",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.08
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "wavesurfer",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.03
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "canvas2d",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.27
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "svg-native",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.01
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "svg-clip",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "canvas-mask",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.01
+  },
+  {
+    "throttle": 4,
+    "scenario": "playback",
+    "strategy": "webgl",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.01
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "wavesurfer",
+    "fps": 58.2,
+    "p95": 16.8,
+    "p99": 33.3,
+    "jankPct": 3.4,
+    "workMs": 9.76
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "canvas2d",
+    "fps": 60.2,
+    "p95": 16.8,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.24
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "svg-native",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.21
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "svg-clip",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 0.26
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "canvas-mask",
+    "fps": 60.2,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0,
+    "workMs": 4.71
+  },
+  {
+    "throttle": 4,
+    "scenario": "zoom",
+    "strategy": "webgl",
+    "fps": 60,
+    "p95": 16.7,
+    "p99": 16.8,
+    "jankPct": 0.3,
+    "workMs": 0.03
+  }
+]

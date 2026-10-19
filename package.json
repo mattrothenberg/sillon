@@ -1,0 +1,16 @@
+{
+  "name": "sillon-monorepo",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "dev": "pnpm --filter @sillon/site dev",
+    "build": "pnpm --filter @sillon/site build",
+    "bench": "pnpm --filter @sillon/bench dev",
+    "typecheck": "pnpm -r typecheck",
+    "audio": "sh scripts/gen-audio.sh"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "d30s": {
+    "serverDecodeMs": 36,
+    "id": "d30s",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 30,
+    "bytes": 481114,
+    "bitrate": 128297
+  },
+  "d5m": {
+    "serverDecodeMs": 206,
+    "id": "d5m",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 300,
+    "bytes": 4801140,
+    "bitrate": 128030
+  },
+  "d1h": {
+    "serverDecodeMs": 2419,
+    "id": "d1h",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 3600,
+    "bytes": 57601087,
+    "bitrate": 128002
+  },
+  "d3h": {
+    "serverDecodeMs": 7350,
+    "id": "d3h",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 10800,
+    "bytes": 172801087,
+    "bitrate": 128000
+  },
+  "d5m-320": {
+    "serverDecodeMs": 239,
+    "id": "d5m-320",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 300,
+    "bytes": 12002786,
+    "bitrate": 320074
+  },
+  "d5m-vbr": {
+    "serverDecodeMs": 250,
+    "id": "d5m-vbr",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 300,
+    "bytes": 3917908,
+    "bitrate": 104477
+  },
+  "d5m-48m": {
+    "serverDecodeMs": 181,
+    "id": "d5m-48m",
+    "sampleRate": 48000,
+    "channels": 1,
+    "duration": 300,
+    "bytes": 3600620,
+    "bitrate": 96016
+  },
+  "d1h-320": {
+    "serverDecodeMs": 2620,
+    "id": "d1h-320",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 3600,
+    "bytes": 144002655,
+    "bitrate": 320005
+  },
+  "d1h-vbr": {
+    "serverDecodeMs": 1969,
+    "id": "d1h-vbr",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 3600,
+    "bytes": 46490161,
+    "bitrate": 103311
+  },
+  "d1h-48m": {
+    "serverDecodeMs": 1666,
+    "id": "d1h-48m",
+    "sampleRate": 48000,
+    "channels": 1,
+    "duration": 3600,
+    "bytes": 43200620,
+    "bitrate": 96001
+  }
+}

@@ -1,0 +1,11 @@
+node_modules
+dist
+.DS_Store
+*.log
+# Generated test audio is large; regenerate with `pnpm audio`.
+apps/*/public/audio/*.mp3
+apps/bench/public/peaks/*.bin
+# Benchmark corpus and references; regenerate with `node bench/gen-files.mjs` in apps/bench.
+apps/bench/public/audio/bench/
+apps/bench/public/truth/
+apps/bench/public/peaks-ws/

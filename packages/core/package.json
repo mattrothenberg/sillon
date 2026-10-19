@@ -1,0 +1,20 @@
+{
+  "name": "@sillon/core",
+  "version": "0.0.0",
+  "description": "Streaming audio peaks: decode in a worker, draw before the file finishes downloading.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts",
+    "./mp3": "./src/mp3.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p .",
+    "test": "node --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

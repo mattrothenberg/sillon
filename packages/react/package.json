@@ -1,0 +1,26 @@
+{
+  "name": "@sillon/react",
+  "version": "0.0.0",
+  "description": "Headless waveform components for React. The SVG supplies the shape; your CSS supplies everything else.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@sillon/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "react": "^19.3.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4"
+  }
+}

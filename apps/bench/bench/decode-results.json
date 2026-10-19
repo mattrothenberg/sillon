@@ -1,0 +1,154 @@
+[
+  {
+    "file": "podcast-5m",
+    "impl": "ours",
+    "firstPaint": 111.40000009536743,
+    "complete": 428,
+    "peakMB": 123.53125,
+    "corr": 0.9353803272964589,
+    "maxErr": 0.5897121615707874
+  },
+  {
+    "file": "podcast-5m",
+    "impl": "ours",
+    "firstPaint": 112.19999992847443,
+    "complete": 378.7999999523163,
+    "peakMB": 124.4375,
+    "corr": 0.9353803272964589,
+    "maxErr": 0.5897121615707874
+  },
+  {
+    "file": "podcast-5m",
+    "impl": "ours",
+    "firstPaint": 124.10000002384186,
+    "complete": 373.10000002384186,
+    "peakMB": 133.296875,
+    "corr": 0.9353803272964589,
+    "maxErr": 0.5897121615707874
+  },
+  {
+    "file": "podcast-5m",
+    "impl": "wavesurfer",
+    "firstPaint": 353.8000000715256,
+    "complete": 353.8000000715256,
+    "peakMB": 416.53125
+  },
+  {
+    "file": "podcast-5m",
+    "impl": "wavesurfer",
+    "firstPaint": 349.2999999523163,
+    "complete": 349.2999999523163,
+    "peakMB": 418.390625
+  },
+  {
+    "file": "podcast-5m",
+    "impl": "wavesurfer",
+    "firstPaint": 353.2000000476837,
+    "complete": 353.2000000476837,
+    "peakMB": 430.34375
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "ours",
+    "firstPaint": 109.29999995231628,
+    "complete": 4292.100000023842,
+    "peakMB": 307.328125,
+    "corr": 0.9771312782718372,
+    "maxErr": 0.5348793752491474
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "ours",
+    "firstPaint": 119.60000002384186,
+    "complete": 4185.299999952316,
+    "peakMB": 295.703125,
+    "corr": 0.9771312782718372,
+    "maxErr": 0.5348793752491474
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "ours",
+    "firstPaint": 129.5,
+    "complete": 4146.600000023842,
+    "peakMB": 312.421875,
+    "corr": 0.9771312782718372,
+    "maxErr": 0.5348793752491474
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "wavesurfer",
+    "firstPaint": 3014.7999999523163,
+    "complete": 3014.7999999523163,
+    "peakMB": 3314.34375
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "wavesurfer",
+    "firstPaint": 3016.399999976158,
+    "complete": 3016.399999976158,
+    "peakMB": 3306.125
+  },
+  {
+    "file": "podcast-60m",
+    "impl": "wavesurfer",
+    "firstPaint": 3001.1999999284744,
+    "complete": 3001.1999999284744,
+    "peakMB": 3309.1875
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "ours",
+    "firstPaint": 110.60000002384186,
+    "complete": 11843.100000023842,
+    "peakMB": 419.59375
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "ours",
+    "firstPaint": 111.70000004768372,
+    "complete": 11828.100000023842,
+    "peakMB": 432.078125
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "ours",
+    "firstPaint": 109.20000004768372,
+    "complete": 12208.400000095367,
+    "peakMB": 437.09375
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "wavesurfer",
+    "firstPaint": 9118.700000047684,
+    "complete": 9118.700000047684,
+    "peakMB": 9522.453125
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "wavesurfer",
+    "firstPaint": 8936.299999952316,
+    "complete": 8936.299999952316,
+    "peakMB": 8551.140625
+  },
+  {
+    "file": "podcast-180m",
+    "impl": "wavesurfer",
+    "firstPaint": 8807.399999976158,
+    "complete": 8807.399999976158,
+    "peakMB": 9630.375
+  },
+  {
+    "file": "podcast-60m @50Mbps",
+    "impl": "ours",
+    "firstPaint": 138.5,
+    "complete": 9270.600000023842,
+    "peakMB": 226.3125
+  },
+  {
+    "file": "podcast-60m @50Mbps",
+    "impl": "wavesurfer",
+    "firstPaint": 12184.5,
+    "complete": 12184.5,
+    "peakMB": 3240.625
+  }
+]

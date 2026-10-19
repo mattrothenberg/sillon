@@ -1,0 +1,6 @@
+<!doctype html><meta charset="utf-8"><title>debug</title>
+<script type="module">
+const w = new Worker(new URL('./src/peaks-worker.ts', import.meta.url), { type: 'module' })
+w.onmessage = (e) => { if (e.data.type === 'debug') window.__dbg = e.data.dbg; if (e.data.type === 'stats') window.__done = true }
+w.postMessage({ url: '/audio/podcast-5m.mp3', bucketSize: 128, postEveryMs: 1e9, debug: true })
+</script>
