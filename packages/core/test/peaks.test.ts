@@ -2,7 +2,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Peaks } from '../src/peaks.ts'
-import { findSilences } from '../src/analyze.ts'
 
 const brute = (v: Float32Array, a: number, b: number) => { let m = 0; for (let i = Math.max(0, a); i < b && i < v.length; i++) m = Math.max(m, v[i]); return m }
 
@@ -38,11 +37,4 @@ test('the whole view at one bar equals the global max', () => {
   const p = Peaks.from(v, { sampleRate: 100, bucketSize: 1 })
   assert.equal(p.peak(0, p.duration), p.max)
   assert.ok(p.complete)
-})
-
-test('findSilences finds the quiet middle', () => {
-  const v = new Float32Array(300).fill(0.5); v.fill(0.001, 100, 200)
-  const p = Peaks.from(v, { sampleRate: 100, bucketSize: 1 })
-  assert.deepEqual(findSilences(p, { minDuration: 0.5 }), [{ start: 1, end: 2 }])
-  assert.deepEqual(findSilences(p, { minDuration: 0.5, keep: 0.2 }), [{ start: 1.1, end: 1.9 }])
 })

@@ -26,12 +26,12 @@ export interface Geometry {
   barGap: number
   barRadius: number
   minBarHeight: number
-  align: 'center' | 'bottom'
+  align: 'center' | 'top' | 'bottom'
   normalize: boolean
-  /** Averages each bar with this many neighbours on each side, for a softer outline. */
+  /** Averages each bar with this many neighbors on each side, for a softer outline. */
   smoothing: number
   /**
-   * Bar heights are raised to this power after normalising. Above 1, quiet
+   * Bar heights are raised to this power after normalizing. Above 1, quiet
    * passages drop and loud ones stand out, which helps evenly mastered music.
    */
   contrast: number
@@ -47,7 +47,7 @@ export interface WaveformState extends Geometry {
   end: number
   /** Seconds under the pointer, or null. */
   hover: number | null
-  /** The gain that normalises bar heights right now. Managed by the store. */
+  /** The gain that normalizes bar heights right now. Managed by the store. */
   gain: number
   /** Draw bars while the file streams in, left to right. Off by default: the waveform appears once, complete. */
   progressive: boolean
@@ -174,9 +174,9 @@ export class WaveformStore {
   }
   /**
    * While peaks stream in, the loudest value so far keeps rising, so
-   * normalising to it would shrink every bar on every update. Instead,
+   * normalizing to it would shrink every bar on every update. Instead,
    * streaming bars are drawn against full scale, and once the file is
-   * complete the gain eases to the normalised value in one short move.
+   * complete the gain eases to the normalized value in one short move.
    */
   private gainAnim = 0
   private resolveGain() {
@@ -290,6 +290,11 @@ export interface RootProps extends HTMLAttributes<HTMLDivElement>, Partial<Geome
   /** Click and drag to seek. On by default when there's a player. */
   interactive?: boolean
   /**
+   * Turns dragging across the waveform into selecting a span instead of
+   * scrubbing; a click still seeks. Called on every move with the span so far.
+   */
+  onDragSelect?: (start: number, end: number) => void
+  /**
    * Draw bars while the file streams in, left to right, so long files show
    * something within a fraction of a second. Off by default: the waveform
    * appears once, complete.
@@ -300,7 +305,22 @@ export interface RootProps extends HTMLAttributes<HTMLDivElement>, Partial<Geome
    * them to their final scale when the file completes. Off by default.
    */
   reveal?: boolean
+  /**
+   * A fixed number of bars. Bar width and gap then scale with the waveform's
+   * width, keeping the proportion of `barWidth` to `barGap`, so it looks the
+   * same at any size, and bars drawn on the server line up with the client's.
+   */
+  bars?: number
   ref?: Ref<HTMLDivElement>
+}
+
+/** Bar width and gap that fit exactly `bars` bars into `width`, in the proportion of `barWidth` to `barGap`. */
+export function fitBars(width: number, bars: number, barWidth: number, barGap: number): { barWidth: number; barGap: number } {
+  if (!bars || !width) return { barWidth, barGap }
+  // bars × pitch − gap = width, with the gap the same share of each pitch as in the props.
+  const share = barGap / (barWidth + barGap)
+  const pitch = width / (bars - share)
+  return { barWidth: pitch * (1 - share), barGap: pitch * share }
 }
 
 /**
@@ -308,7 +328,7 @@ export interface RootProps extends HTMLAttributes<HTMLDivElement>, Partial<Geome
  * `position: relative`; give it a size and every part fills it.
  */
 function Root({
-  peaks, player = null, start, end, step = 5, interactive = !!player, progressive = false, reveal = false, store: external,
+  peaks, player = null, start, end, step = 5, interactive = !!player, progressive = false, reveal = false, store: external, onDragSelect, bars = 0,
   barWidth = 2, barGap = 1, barRadius = 0, minBarHeight = 1, align = 'center', normalize = true,
   smoothing = 0, contrast = 1, children, style, ref, onPointerDown, onPointerMove, onPointerEnter, onPointerLeave, onKeyDown, ...rest
 }: RootProps) {
@@ -317,11 +337,16 @@ function Root({
   const el = useRef<HTMLDivElement | null>(null)
   const rect = useRef<DOMRect | null>(null)
   const dragging = useRef(false)
+  // Where a press began, to tell a click from a drag-select.
+  const press = useRef<{ x: number; t: number; selecting: boolean } | null>(null)
 
   // Props only override the view when given, so `store.setView()` isn't undone by a re-render.
   if (end !== undefined) store.endProp = end
+  // Bar width and gap for a given width: as given, or fitted to a fixed number of bars.
+  const fit = useRef((w: number) => fitBars(w, bars, barWidth, barGap))
+  fit.current = (w: number) => fitBars(w, bars, barWidth, barGap)
   useLayoutEffect(() => {
-    const patch: Partial<WaveformState> = { progressive, reveal, peaks, player, barWidth, barGap, barRadius, minBarHeight, align, normalize, smoothing, contrast }
+    const patch: Partial<WaveformState> = { progressive, reveal, peaks, player, ...fit.current(store.state.width), barRadius, minBarHeight, align, normalize, smoothing, contrast }
     if (start !== undefined) patch.start = start
     store.update(patch)
   })
@@ -331,10 +356,10 @@ function Root({
     // ResizeObserver fires after layout and before paint: no stretched frame.
     const ro = new ResizeObserver(() => {
       rect.current = null
-      store.update({ width: node.clientWidth, height: node.clientHeight })
+      store.update({ width: node.clientWidth, height: node.clientHeight, ...fit.current(node.clientWidth) })
     })
     ro.observe(node)
-    store.update({ width: node.clientWidth, height: node.clientHeight })
+    store.update({ width: node.clientWidth, height: node.clientHeight, ...fit.current(node.clientWidth) })
     return () => { ro.disconnect(); store.destroy() }
   }, [store])
 
@@ -357,13 +382,14 @@ function Root({
   useLayoutEffect(() => {
     const node = el.current!
     if (!interactive || !player) return
-    let last = -1
+    let last = -1, lastMax = -1
     const write = (t: number, force = false) => {
       const s = Math.floor(t)
       if (s === last && !force) return
       last = s
       node.setAttribute('aria-valuenow', String(s))
-      node.setAttribute('aria-valuemax', String(Math.floor(store.state.end)))
+      const max = Math.floor(store.state.end)
+      if (max !== lastMax) node.setAttribute('aria-valuemax', String((lastMax = max)))
       node.setAttribute('aria-valuetext', `${formatTime(t)} of ${formatTime(store.state.end)}`)
     }
     write(player.time, true)
@@ -386,6 +412,9 @@ function Root({
   }
 
   const live = interactive && player
+  // React bubbles events from portals through their React parents, so a popover opened from a marker would
+  // otherwise seek and grab the pointer. Only events from inside the waveform's own element count.
+  const ours = (e: { target: EventTarget; currentTarget: HTMLElement }) => e.currentTarget.contains(e.target as Node)
   return (
     <WaveformContext.Provider value={store}>
       <div
@@ -403,27 +432,35 @@ function Root({
         }}
         onPointerDown={(e) => {
           onPointerDown?.(e)
-          if (!live || e.defaultPrevented || e.button !== 0) return
+          if (!live || e.defaultPrevented || e.button !== 0 || !ours(e)) return
           rect.current = e.currentTarget.getBoundingClientRect()
           dragging.current = true
           e.currentTarget.setPointerCapture(e.pointerId)
-          player.seek(timeAt(e))
+          const t = timeAt(e)
+          press.current = { x: e.clientX, t, selecting: false }
+          player.seek(t)
         }}
         onPointerMove={(e) => {
           onPointerMove?.(e)
+          if (!dragging.current && !ours(e)) return store.setHover(null)
           const t = timeAt(e)
           store.setHover(t)
-          if (dragging.current && player) player.seek(t)
+          if (!dragging.current || !player) return
+          const p = press.current
+          if (p && onDragSelect && (p.selecting || Math.abs(e.clientX - p.x) > 3)) {
+            p.selecting = true
+            onDragSelect(Math.min(p.t, t), Math.max(p.t, t))
+          } else player.seek(t)
         }}
-        onPointerUp={() => (dragging.current = false)}
-        onPointerCancel={() => (dragging.current = false)}
+        onPointerUp={() => { dragging.current = false; press.current = null }}
+        onPointerCancel={() => { dragging.current = false; press.current = null }}
         onPointerLeave={(e) => {
           onPointerLeave?.(e)
           if (!dragging.current) store.setHover(null)
         }}
         onKeyDown={(e: KeyboardEvent<HTMLDivElement>) => {
           onKeyDown?.(e)
-          if (!live || e.defaultPrevented) return
+          if (!live || e.defaultPrevented || !ours(e)) return
           const t = player.time, s = store.state
           const to: Record<string, number> = {
             ArrowLeft: t - step, ArrowDown: t - step, ArrowRight: t + step, ArrowUp: t + step,
@@ -446,18 +483,19 @@ function Root({
 const round1 = (x: number) => Math.round(x * 10) / 10
 /** Width of the sweep's soft leading edge, in seconds, for a view `span` seconds long. */
 const rampOf = (span: number) => span * 0.08
-/** A normalised peak (0–1) with `contrast` applied. */
+/** A normalized peak (0–1) with `contrast` applied. */
 export const level = (v: number, contrast: number) => (contrast === 1 ? v : Math.pow(clamp(v, 0, 1), contrast))
 
 /** True once there are bars to draw: all of them, or with `progressive`, any. */
 export const isReady = (s: WaveformState) => (s.progressive ? !!s.peaks : !!s.peaks?.complete)
 
-const barCount = (s: WaveformState) => Math.max(0, Math.floor((s.width + s.barGap) / (s.barWidth + s.barGap)))
+// The epsilon keeps a width fitted to exactly n bars (see fitBars) from rounding down to n − 1.
+const barCount = (s: WaveformState) => Math.max(0, Math.floor((s.width + s.barGap) / (s.barWidth + s.barGap) + 1e-6))
 
 /** One rounded bar of height `h` in slot `i`, as path data. */
 function barPath(s: WaveformState, i: number, h: number): string {
   const w = s.barWidth
-  const x = round1(i * (w + s.barGap)), y = round1(s.align === 'bottom' ? s.height - h : (s.height - h) / 2)
+  const x = round1(i * (w + s.barGap)), y = round1(s.align === 'bottom' ? s.height - h : s.align === 'top' ? 0 : (s.height - h) / 2)
   const r = Math.min(s.barRadius, w / 2, h / 2)
   if (r <= 0) return `M${x} ${y}h${w}v${h}h-${w}z`
   const hw = round1(w - 2 * r), hh = round1(h - 2 * r), rr = round1(r)
@@ -635,16 +673,27 @@ function Hover({ style, ...rest }: HTMLAttributes<HTMLDivElement>) {
   return <div {...rest} ref={ref} data-sillon-hover="" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, pointerEvents: 'none', opacity: 0, willChange: 'transform', ...style }} />
 }
 
-export interface RegionProps extends HTMLAttributes<HTMLDivElement> {
+export interface RegionProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   start: number
   end: number
+  /**
+   * Makes the region editable: drag it to move it, drag a `RegionHandle`
+   * inside it to resize. Called on every move with the new span.
+   */
+  onChange?: (start: number, end: number) => void
+  /** Shortest span a resize can make, in seconds. */
+  minLength?: number
 }
+
+type Edit = 'move' | 'start' | 'end'
+const RegionContext = createContext<((e: PointerEvent<HTMLElement>, edit: Edit) => void) | null>(null)
 
 /**
  * A span of time. Inside `Shape` it tints only the bars; outside, it's a box
- * over the whole height.
+ * over the whole height. With `onChange`, it can be moved and resized.
  */
-function Region({ start, end, style, ...rest }: RegionProps) {
+function Region({ start, end, onChange, minLength = 0.1, style, onPointerDown, children, ...rest }: RegionProps) {
+  const store = useWaveform()
   const ref = useRef<HTMLDivElement>(null)
   useStoreEffect((s, change) => {
     if (change === 'data') return
@@ -654,7 +703,87 @@ function Region({ start, end, style, ...rest }: RegionProps) {
     el.style.transform = `translateX(${l}px)`
     el.style.width = `${Math.max(0, r - l)}px`
   }, {}, [start, end])
-  return <div {...rest} ref={ref} data-sillon-region="" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, ...style }} />
+
+  const span = useRef({ start, end, onChange, minLength })
+  span.current = { start, end, onChange, minLength }
+  // Starts a move or resize. Seconds per pixel are read once, at the press.
+  const begin = useCallback((e: PointerEvent<HTMLElement>, edit: Edit) => {
+    const { start: a, end: b, onChange: change } = span.current
+    if (!change || e.button !== 0) return
+    // Keeps Root from seeking.
+    e.preventDefault()
+    const s = store.state
+    const perPx = (s.end - s.start) / (s.width || 1)
+    const total = s.peaks?.duration || s.player?.duration || s.end
+    const x0 = e.clientX, target = e.currentTarget
+    // The waveform's left edge on screen: one layout read per press.
+    const left = ref.current!.getBoundingClientRect().left - timeToX(s, a)
+    target.setPointerCapture(e.pointerId)
+    let moved = false
+    const move = (ev: globalThis.PointerEvent) => {
+      moved ||= Math.abs(ev.clientX - x0) > 3
+      if (!moved) return
+      const d = (ev.clientX - x0) * perPx, min = span.current.minLength
+      if (edit === 'move') {
+        const shift = clamp(d, -a, total - b)
+        change(a + shift, b + shift)
+      } else if (edit === 'start') change(clamp(a + d, 0, b - min), b)
+      else change(a, clamp(b + d, a + min, total))
+    }
+    const up = (ev: globalThis.PointerEvent) => {
+      // A click that didn't drag seeks, as it would anywhere else on the waveform.
+      if (!moved && ev.type === 'pointerup') s.player?.seek(clamp(s.start + (ev.clientX - left) * perPx, 0, total))
+      target.removeEventListener('pointermove', move)
+      target.removeEventListener('pointerup', up)
+      target.removeEventListener('pointercancel', up)
+    }
+    target.addEventListener('pointermove', move)
+    target.addEventListener('pointerup', up)
+    target.addEventListener('pointercancel', up)
+  }, [store])
+
+  return (
+    <RegionContext.Provider value={begin}>
+      <div
+        {...rest}
+        ref={ref}
+        data-sillon-region=""
+        style={{ position: 'absolute', top: 0, bottom: 0, left: 0, ...style }}
+        onPointerDown={(e) => {
+          onPointerDown?.(e)
+          if (!e.defaultPrevented) begin(e, 'move')
+        }}
+      >
+        {children}
+      </div>
+    </RegionContext.Provider>
+  )
+}
+
+export interface RegionHandleProps extends HTMLAttributes<HTMLDivElement> {
+  /** Which edge this handle drags. */
+  side: 'start' | 'end'
+}
+
+/**
+ * A grip on one edge of an editable `Region`, as tall as the region and
+ * zero width by default, like `Cursor`. Give it a width; center it on the
+ * edge with `translate`. `data-sillon-handle` is "start" or "end".
+ */
+function RegionHandle({ side, style, onPointerDown, ...rest }: RegionHandleProps) {
+  const begin = useContext(RegionContext)
+  if (!begin) throw new Error('Waveform.RegionHandle must be inside <Waveform.Region>')
+  return (
+    <div
+      {...rest}
+      data-sillon-handle={side}
+      style={{ position: 'absolute', top: 0, bottom: 0, [side === 'start' ? 'left' : 'right']: 0, ...style }}
+      onPointerDown={(e) => {
+        onPointerDown?.(e)
+        if (!e.defaultPrevented) begin(e, side)
+      }}
+    />
+  )
 }
 
 export interface TimeProps extends HTMLAttributes<HTMLSpanElement> {
@@ -686,20 +815,21 @@ export interface MarkerProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * A moment in time: a zero-width box at `time`, as tall as the waveform.
- * Put an avatar, a pin or a label inside. Hidden when outside the view.
+ * Put an avatar, a pin or a label inside. Hidden when outside the view, and
+ * until the duration is known.
  */
 function Marker({ time, style, ...rest }: MarkerProps) {
   const ref = useRef<HTMLDivElement>(null)
   useStoreEffect((s, change) => {
     if (change === 'data') return
     const el = ref.current!, x = timeToX(s, time)
-    el.style.display = x < 0 || x > s.width || !s.width ? 'none' : ''
+    el.style.display = x < 0 || x > s.width || !s.width || s.end <= s.start ? 'none' : ''
     el.style.transform = `translateX(${x}px)`
   }, {}, [time])
   return <div {...rest} ref={ref} data-sillon-marker="" style={{ position: 'absolute', top: 0, bottom: 0, left: 0, ...style }} />
 }
 
-export const Waveform = { Root, Shape, Skeleton, Track, Progress, Cursor, Hover, Region, Time, Marker }
+export const Waveform = { Root, Shape, Skeleton, Track, Progress, Cursor, Hover, Region, RegionHandle, Time, Marker }
 
 /* ---------------------------------------------------------------- Timed items */
 
@@ -725,17 +855,17 @@ export interface Group<T> {
  * Groups items that would sit closer than `gap` pixels apart at the current
  * zoom and width, so 200 comments on a 3-minute track don't pile up. Zoom in
  * and they split apart. Re-renders only when the grouping changes, not on
- * every zoom frame.
+ * every zoom frame. Until the duration is known, each item is its own group.
  */
 export function useGroups<T extends { time: number }>(items: readonly T[], gap = 24): Group<T>[] {
   const store = useWaveform()
   const sorted = useMemo(() => byTime(items), [items])
   const compute = () => {
-    const s = store.state, groups: Group<T>[] = []
+    const s = store.state, groups: Group<T>[] = [], placed = s.end > s.start
     let cur: Group<T> | null = null, x0 = 0
     for (const item of sorted) {
       const x = timeToX(s, item.time)
-      if (cur && x - x0 < gap) { cur.items.push(item); cur.end = item.time }
+      if (cur && placed && x - x0 < gap) { cur.items.push(item); cur.end = item.time }
       else { groups.push((cur = { key: '', time: item.time, end: item.time, items: [item] })); x0 = x }
     }
     for (const g of groups) g.key = `${g.time}:${g.items.length}`

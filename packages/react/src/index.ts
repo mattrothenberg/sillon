@@ -14,12 +14,12 @@ import { GL } from './gl'
  */
 export const Waveform = { ...Parts, GL }
 
-export { useWaveform, useWaveformStore, useGroups, useActive, isReady, barsPath, formatTime, timeToX, WaveformStore } from './waveform'
-export type { Change, WaveformState, Geometry, RootProps, ShapeProps, RegionProps, TimeProps, MarkerProps, SkeletonProps, Group } from './waveform'
+export { useWaveform, useWaveformStore, useGroups, useActive, isReady, barsPath, fitBars, formatTime, timeToX, WaveformStore } from './waveform'
+export type { Change, WaveformState, Geometry, RootProps, ShapeProps, RegionProps, RegionHandleProps, TimeProps, MarkerProps, SkeletonProps, Group } from './waveform'
 export type { GLProps } from './gl'
-export { createPlayer, usePlayer, usePlayerState, type Player } from './player'
+export { createPlayer, usePlayer, usePlayerState, type Player, type Span } from './player'
 export { usePeaks, type UsePeaks } from './use-peaks'
 export { useAudio, type UseAudio } from './use-audio'
-export { Peaks, streamPeaks, findSilences, summarize } from '@sillon/core'
-export type { Span, Summary, StreamStats } from '@sillon/core'
-export { Visualizer, type VisualizerProps } from './visualizer'
+export { Peaks, streamPeaks } from '@sillon/core'
+export type { StreamStats } from '@sillon/core'
+export { Visualizer, visualizerRays, type VisualizerProps } from './visualizer'

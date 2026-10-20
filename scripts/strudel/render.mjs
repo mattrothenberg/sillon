@@ -1,6 +1,9 @@
 // Renders a Strudel pattern to MP3: plays it in headless Chromium, taps
 // everything that reaches the speakers, and writes the PCM out via ffmpeg.
-//   node strudel/render.mjs [name] [seconds]
+//   node strudel/render.mjs [name] [seconds] [--voice '<strudel>' --as <out-name>]
+// --voice replaces the pattern's final `.s(...)...` line, so one arrangement can be
+// rendered with different instruments and effects, e.g.
+//   --voice '.s("vibraphone").delay(.45).delaytime(.6).delayfeedback(.5).room(.8)' --as avril-vibes
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
 import { readFileSync, writeFileSync } from 'node:fs'
@@ -9,10 +12,19 @@ import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
 
 const here = dirname(fileURLToPath(import.meta.url))
-const name = process.argv[2] ?? 'loop'
-const seconds = Number(process.argv[3] ?? 32)
-const out = join(here, '../../apps/bench/public/audio', `${name}.mp3`)
-const code = readFileSync(join(here, `${name}.strudel.js`), 'utf8')
+const args = process.argv.slice(2)
+const flag = (k) => { const i = args.indexOf(k); return i >= 0 ? args[i + 1] : null }
+const name = args[0] ?? 'loop'
+const seconds = Number(args[1] ?? 32)
+const voice = flag('--voice')
+const outName = flag('--as') ?? name
+const out = join(here, '../../apps/bench/public/audio', `${outName}.mp3`)
+let code = readFileSync(join(here, `${name}.strudel.js`), 'utf8')
+if (voice) {
+  const swapped = code.replace(/\)\.s\([^\n]*\s*$/, ')' + voice + '\n')
+  if (swapped === code) throw new Error('--voice: no final .s(...) line to replace')
+  code = swapped
+}
 const bundle = readFileSync(join(here, '../node_modules/@strudel/web/dist/index.js'))
 
 const page = `<!doctype html><script>
@@ -51,6 +63,8 @@ const init = () => p.evaluate(async () => {
     prebake: () => Promise.all([
       samples('github:tidalcycles/dirt-samples'),
       samples('https://raw.githubusercontent.com/felixroos/dough-samples/main/piano.json'),
+      // Versilian Community Sample Library: vibraphone, marimba and other mallets.
+      samples('https://raw.githubusercontent.com/felixroos/dough-samples/main/vcsl.json'),
     ]),
   })
   await getAudioContext().resume()
@@ -79,9 +93,13 @@ server.close()
 // Strudel emits a short burst as the page wakes, then silence until the
 // first scheduled cycle. Start the take at the first onset after a gap.
 const win = Math.round(sampleRate / 100)
-const loud = (w) => { let m = 0; for (let k = w * win; k < (w + 1) * win && k < left.length; k++) m = Math.max(m, Math.abs(left[k]), Math.abs(right[k])); return m > 0.01 }
+// "Loud" is relative to the music, measured from 3 s in so the wake-up burst doesn't count:
+// some instruments (VCSL's marimba) play 20 dB quieter than the burst.
+let ref = 0
+for (let i = sampleRate * 3; i < left.length; i++) ref = Math.max(ref, Math.abs(left[i]), Math.abs(right[i]))
+const loud = (w) => { let m = 0; for (let k = w * win; k < (w + 1) * win && k < left.length; k++) m = Math.max(m, Math.abs(left[k]), Math.abs(right[k])); return m > ref * 0.02 }
 let from = 0
-for (let w = 0, quiet = 0; w * win < Math.min(left.length, sampleRate * 6); w++) {
+for (let w = 0, quiet = 0; w * win < Math.min(left.length, sampleRate * 15); w++) {
   if (!loud(w)) quiet++
   else { if (quiet >= 50 || (from === 0 && w === 0)) from = w * win; quiet = 0 }
 }
@@ -93,10 +111,10 @@ for (let i = from; i < left.length; i++) peak = Math.max(peak, Math.abs(left[i])
 const gain = peak ? 0.89 / peak : 1
 const pcm = Buffer.alloc(n * 8)
 for (let i = 0; i < n; i++) { pcm.writeFloatLE(left[from + i] * gain, i * 8); pcm.writeFloatLE(right[from + i] * gain, i * 8 + 4) }
-const raw = join(here, `.${name}.f32`)
+const raw = join(here, `.${outName}.f32`)
 writeFileSync(raw, pcm)
 execFileSync('ffmpeg', ['-v', 'error', '-y', '-f', 'f32le', '-ar', String(sampleRate), '-ac', '2', '-i', raw,
   '-af', `atrim=0:${seconds + 2},afade=t=out:st=${seconds}:d=2`,
   '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '192k', out])
 execFileSync('rm', [raw])
-console.log(`${name}: ${(n / sampleRate).toFixed(1)}s from ${(from / sampleRate).toFixed(2)}s → ${out}`)
+console.log(`${outName}: ${(n / sampleRate).toFixed(1)}s from ${(from / sampleRate).toFixed(2)}s → ${out}`)
