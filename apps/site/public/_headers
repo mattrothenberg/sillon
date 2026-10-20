@@ -1,8 +1,10 @@
 # Security headers for every response. Served by Workers Static Assets.
 # script-src: Astro's islands and the theme script are inline; the recorder loads its AudioWorklet from a blob: URL.
-# media-src blob: plays a recording back. Permissions-Policy lets this page, and only it, use the microphone.
+# media-src blob: plays a recording back.
+# Cloudflare Web Analytics adds its beacon from static.cloudflareinsights.com, which reports to cloudflareinsights.com.
+# Permissions-Policy lets this page, and only it, use the microphone.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self' https://cloudflareinsights.com; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
   Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
