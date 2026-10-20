@@ -1,0 +1,10 @@
+---
+import Page from '../layouts/Page.astro'
+import { col, ledeText } from '../cls'
+---
+<Page title="Not found · sillon" description="There's no page at this address." page="none">
+  <main class={`${col} pt-[72px] pb-[160px] narrow:pt-12`}>
+    <h1 class="text-[40px]/[1.12] font-semibold tracking-[-0.02em] narrow:text-[32px]">Not found</h1>
+    <p class={`${ledeText} max-w-text`}>There's no page at this address. <a href="/">Go to the home page</a>.</p>
+  </main>
+</Page>

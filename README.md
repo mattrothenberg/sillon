@@ -66,6 +66,15 @@ The React tests run in real Chromium. The first time, install it with `pnpm --fi
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is organized, the rules the components follow, and how the audio and benchmarks are made.
 
+## Deploying the site
+
+The site is a static Cloudflare Worker (`apps/site/wrangler.jsonc`): the built files, served at [sillon.mattrothenberg.com](https://sillon.mattrothenberg.com) with the security headers in `apps/site/public/_headers`, and no workers.dev or preview URLs.
+
+```sh
+pnpm --filter @sillon/site preview   # build, then serve it locally with wrangler
+pnpm --filter @sillon/site deploy    # build, then deploy (needs `wrangler login`)
+```
+
 ## Releasing
 
 Releases use [Changesets](https://github.com/changesets/changesets). `@sillon/core` and `@sillon/react` share one version number and are always released together.

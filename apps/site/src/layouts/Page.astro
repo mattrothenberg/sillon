@@ -3,7 +3,7 @@ import '../global.css'
 import { markSvg } from '../lib/mark'
 import { meta, tip } from '../cls'
 
-interface Props { title: string; description: string; page: 'home' | 'why' }
+interface Props { title: string; description: string; page: 'home' | 'why' | 'none' }
 const { title, description, page } = Astro.props
 
 const wordmarkTip = `${tip} pointer-events-none absolute top-[calc(100%+12px)] left-0 z-30 w-max scale-96 opacity-0 origin-top-left

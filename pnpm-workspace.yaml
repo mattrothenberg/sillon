@@ -10,6 +10,9 @@ packages:
 minimumReleaseAge: 4320
 
 # Dependencies with install scripts. sharp (Astro's image service) ships
-# prebuilt binaries as optional dependencies; its install script isn't needed.
+# prebuilt binaries as optional dependencies, and esbuild's and workerd's
+# (wrangler's) postinstalls only check their platform binaries; none are needed.
 allowBuilds:
+  esbuild: false
   sharp: false
+  workerd: false
