@@ -168,7 +168,7 @@ if (q.has('still')) { result.done = true } else {
       const w0 = performance.now()
       if (scenario === 'playback') s.progress(t % 1)
       else {
-        // Continuous zoom from the whole hour down to ~5 seconds, centred at 30:00.
+        // Continuous zoom from the whole hour down to ~5 seconds, centered at 30:00.
         const minSpan = (5 * SR) / SAMPLES_PER_BUCKET
         const span = N * Math.pow(minSpan / N, (Math.sin(t * Math.PI * 2 - Math.PI / 2) + 1) / 2)
         s.view(Math.max(0, N / 2 - span / 2), span)

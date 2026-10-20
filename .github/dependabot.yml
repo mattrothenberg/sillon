@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Keeps the SHA-pinned actions current. The cooldown matches the 3-day
+  # minimumReleaseAge in pnpm-workspace.yaml: no freshly published releases.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7

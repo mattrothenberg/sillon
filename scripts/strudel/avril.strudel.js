@@ -75,4 +75,4 @@ const I = stack(
 arrange(
   [4, A], [4, B], [8, C], [2, D], [2, E],
   [4, A], [4, F], [4, G], [2, H], [3, I],
-).s("piano").room(.5)
+).s("marimba").delay(.4).delaytime(.6).delayfeedback(.45).room(.7).size(3)

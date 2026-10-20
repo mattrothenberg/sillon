@@ -4,6 +4,8 @@ dist
 *.log
 # Generated test audio is large; regenerate with `pnpm audio`.
 apps/*/public/audio/*.mp3
+# Except the site's song, which the site needs to build and play.
+!apps/site/public/audio/avril.mp3
 apps/bench/public/peaks/*.bin
 # Benchmark corpus and references; regenerate with `node bench/gen-files.mjs` in apps/bench.
 apps/bench/public/audio/bench/
@@ -11,3 +13,4 @@ apps/bench/public/truth/
 apps/bench/public/peaks-ws/
 apps/bench/public/peaks-dat/
 .astro
+.vitest/

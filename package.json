@@ -5,12 +5,18 @@
   "packageManager": "pnpm@12.3.4",
   "scripts": {
     "dev": "pnpm --filter @sillon/site dev",
-    "build": "pnpm --filter @sillon/site build",
-    "bench": "pnpm --filter @sillon/bench dev",
+    "build": "pnpm --filter \"./packages/*\" build",
+    "build:site": "pnpm --filter @sillon/site build",
     "typecheck": "pnpm -r typecheck",
-    "audio": "sh scripts/gen-audio.sh"
+    "test": "pnpm --filter \"./packages/*\" test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "bench": "pnpm --filter @sillon/bench dev",
+    "audio": "sh scripts/gen-audio.sh",
+    "og": "node scripts/og.mjs"
   },
   "devDependencies": {
+    "@changesets/cli": "^3.0.3",
     "typescript": "^7.0.2"
   }
 }
