@@ -80,13 +80,14 @@ Publishing uses npm [trusted publishing](https://docs.npmjs.com/trusted-publishe
 
 ### The first release
 
-Trusted publishing can only be set up for a package that already exists, so the first version goes out by hand:
+npm attaches a trusted publisher only to a package that already exists, so each package is created once by hand, with a placeholder that holds no code. Every version with code is built and published by the release workflow.
 
 1. Create the `sillon` organization on npmjs.com (the `@sillon` scope).
-2. From a clean checkout of `main`: `pnpm install && pnpm build`, then in `packages/core` and then `packages/react`, `pnpm pack` and `npm publish sillon-<name>-0.1.0.tgz --access public`. `pnpm pack` replaces `workspace:^` with the real version range; plain `npm publish` in the folder wouldn't.
-3. For each package on npmjs.com, under Settings → Trusted publishing, add GitHub Actions with repository `mattrothenberg/sillon`, workflow `release.yml` and environment `npm`, limited to staged publishing. Then set Publishing access to disallow tokens.
-4. In the GitHub repository, create the `npm` environment, require a reviewer, and limit it to `main`.
-5. Add rulesets: `main` can't be force-pushed or deleted, and tags matching `@sillon/*` can't be moved or deleted.
+2. Publish the placeholders from `scripts/npm-placeholders` with your own login and 2FA (`npm login`, then `npm publish --access public` in `core/` and in `react/`). They're `0.0.0`, with a README and nothing else; no token is created.
+3. For each package on npmjs.com, under Settings → Trusted publishing, add GitHub Actions with repository `mattrothenberg/sillon`, workflow `release.yml` and environment `npm`, allowing staged publishing only (or `npm trust github … --env npm --allow-stage-publish`). Then set Publishing access to require 2FA and disallow tokens.
+4. In the GitHub repository, the `npm` environment requires a maintainer's approval and only deploys from `main`; `main` and the `@sillon/*` tags are protected by rulesets.
+5. Within two days (npm expires a trusted publisher that hasn't published), push to `main`. The release workflow stages 0.1.0 of both packages: approve the `npm` environment in GitHub, then each staged version on npm, `@sillon/core` first.
+6. Deprecate the placeholders: `npm deprecate @sillon/core@0.0.0 "Placeholder"` and the same for `@sillon/react`.
 
 ## Credits
 

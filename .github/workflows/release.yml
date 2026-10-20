@@ -43,10 +43,10 @@ jobs:
       - id: due
         if: steps.changesets.outputs.has-changesets == 'false'
         run: |
-          # The first version of each package is published by hand (see the README),
-          # since trusted publishing can only be set up for a package that exists.
+          # Trusted publishing needs each package to exist first: a placeholder
+          # published by hand (see "The first release" in the README).
           if ! npm view "@sillon/core" name >/dev/null 2>&1 || ! npm view "@sillon/react" name >/dev/null 2>&1; then
-            echo "The packages aren't on npm yet; publish the first version by hand."
+            echo "The packages aren't on npm yet; publish the placeholders first."
             echo "stage=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
