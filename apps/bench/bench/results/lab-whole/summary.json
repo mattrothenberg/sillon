@@ -1,0 +1,1592 @@
+{
+  "date": "lab-whole",
+  "env": {
+    "date": "lab-whole",
+    "cpu": "Apple M4 Pro",
+    "cores": 14,
+    "memGB": 48,
+    "os": "macOS 26.6.2 (Darwin 25.6.0)",
+    "power": "AC Power",
+    "node": "v22.22.0",
+    "playwright": "1.64.1"
+  },
+  "power": "plugged in",
+  "conditions": "on AC Power, 1-min load average before each run 5.2 median / 6.3 max",
+  "generated": "2026-10-20T00:09:42.217Z",
+  "raw": "apps/bench/bench/results/lab-whole/raw.jsonl",
+  "notes": {
+    "contenders": {
+      "sillon": "@sillon/react parts over streamPeaks(): fetch-streamed MP3, WebCodecs decode in a worker, 256-sample max-abs peaks; plus a preload=metadata <audio> as usePlayer creates.",
+      "sillon-fallback": "sillon with its worker forced to report unsupported: whole-file fetch + OfflineAudioContext.decodeAudioData at 44.1 kHz, peaks on the main thread.",
+      "ws": "wavesurfer.js 8.0.2 defaults (url only): fetch + decodeAudioData into an 8 kHz AudioContext.",
+      "ws-peaks": "wavesurfer.js 8.0.2 with precomputed 8000-point peaks JSON + duration (its long-file advice); JSON fetch timed, server step in serverPeaksCost.",
+      "naive": "fetch + new AudioContext().decodeAudioData + per-pixel max on the main thread + canvas.",
+      "peaksjs": "peaks.js 4.0.0 overview with precomputed data in the layout `audiowaveform -b 8` writes (256 samples per pixel, channels averaged), made here from ffmpeg; the .dat fetch is timed, served uncompressed.",
+      "peaksjs-webaudio": "peaks.js 4.0.0 overview with its Web Audio path: XHR for the whole file, decodeAudioData, waveform data on the main thread."
+    },
+    "feed": "20 waveforms of 20 different 3-minute speech files (CBR 128 kbps) on one page, each with something that can play it. sillon: one useAudio() per item with library defaults (each waveform draws once its file is read; all 20 stream at once). wavesurfer.js: one WaveSurfer.create per item (defaults, or precomputed peaks). peaks.js: one overview per item (precomputed .dat, or Web Audio with one shared AudioContext). \"Complete\" is when the last of the 20 is on screen.",
+    "runtime": [
+      "Both libraries draw the same 1-hour file from the same precomputed data (ffmpeg, 256-sample max-abs), so nothing is decoded during the test. 1200 px wide, 2 px bars, 1 px gaps.",
+      "Each scenario runs 8 s: playback (the audio plays, muted; played part and cursor follow it), zoom (the view sweeps from the whole hour to 5 s at 30:00 and back, set every frame), resize (container width swings 600–1200 px every frame).",
+      "Main-thread time is Chromium's Performance.getMetrics TaskDuration (plus its script, layout and style parts), in ms per second of wall time, unthrottled only: under CDP CPU throttling those counters went down for light work (bench/metrics-check.mjs), so throttled runs report frame timing only.",
+      "CPU throttling (CDP Emulation.setCPUThrottlingRate) slows the page's main thread only. That is fine here, since neither library uses a worker after loading.",
+      "Slow frames: share of animation frames longer than 1.5× the median frame. Redraws: sillon, changes to its clip path; wavesurfer.js, its redrawcomplete events. Commits: React commits during the window, counted through the React DevTools hook.",
+      "wavesurfer.js waits for resizing to pause (100 ms) before redrawing, so during a continuous resize it does less work and shows its old drawing stretched; sillon redraws every frame."
+    ],
+    "memory": "Peak memory: most RSS of the browser's whole process tree while loading, minus the same tree idle on a blank page. Memory while open: the same, measured 3 s after loading finished plus 1 s after a forced garbage collection (Chromium only). RSS is what the OS has handed the browser; memory freed inside the browser is not always returned right away, so \"while open\" can include memory the page no longer uses.",
+    "method": [
+      "Fresh browser process per run, cold cache, seeded-random interleaved order, 1 s pause between runs.",
+      "Times are ms since navigation start (bundle load counts). Drawn = second rAF after the first draw with real data.",
+      "Network shaped at the server with one shared token bucket (DevTools emulation may skip worker fetches). JS/HTML/JSON gzipped.",
+      "Memory: RSS of the whole browser process tree sampled every 100 ms, minus the same tree idle on a blank page.",
+      "CPU: CPU seconds of that tree from navigation to complete, all threads. TBT: Chromium long tasks only.",
+      "Accuracy: vs ffmpeg decode (gapless-trimmed), ~20 000 bins aligned to 256-sample reference buckets.",
+      "sillon bundle includes React + ReactDOM (~65 kB gz), counted against it. JS transferred: every JavaScript response as served (gzipped), worker scripts included."
+    ],
+    "caveats": [
+      "One machine, headless browsers, on AC Power, 1-min load average before each run 5.2 median / 6.3 max; absolute numbers will differ elsewhere.",
+      "Speech corpus (TTS); wavesurfer decodes at 8 kHz by default, so its peak accuracy is lower by design and the difference is invisible at overview zoom.",
+      "sillon \"first bars\" is the start of a left-to-right stream, not the whole waveform; compare \"complete\" or \"half\" for the full shape.",
+      "Load suites are not CPU-throttled: Chromium's throttling does not reach workers (bench/throttle-check.mjs), so a throttled run would slow the others' decoding but not sillon's.",
+      "Music is one 2-minute file (m2m, 192 kbps); the rest of the corpus is speech."
+    ]
+  },
+  "serverPeaksCost": {
+    "d30s": {
+      "serverDecodeMs": 38,
+      "id": "d30s",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 30,
+      "bytes": 481114,
+      "bitrate": 128297
+    },
+    "d5m": {
+      "serverDecodeMs": 200,
+      "id": "d5m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 4801140,
+      "bitrate": 128030
+    },
+    "d1h": {
+      "serverDecodeMs": 2194,
+      "id": "d1h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 57601087,
+      "bitrate": 128002
+    },
+    "d3h": {
+      "serverDecodeMs": 6518,
+      "id": "d3h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 10800,
+      "bytes": 172801087,
+      "bitrate": 128000
+    },
+    "d5m-320": {
+      "serverDecodeMs": 235,
+      "id": "d5m-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 12002786,
+      "bitrate": 320074
+    },
+    "d5m-vbr": {
+      "serverDecodeMs": 185,
+      "id": "d5m-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 3917908,
+      "bitrate": 104477
+    },
+    "d5m-48m": {
+      "serverDecodeMs": 154,
+      "id": "d5m-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 300,
+      "bytes": 3600620,
+      "bitrate": 96016
+    },
+    "d1h-320": {
+      "serverDecodeMs": 2626,
+      "id": "d1h-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 144002655,
+      "bitrate": 320005
+    },
+    "d1h-vbr": {
+      "serverDecodeMs": 1986,
+      "id": "d1h-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 46490161,
+      "bitrate": 103311
+    },
+    "d1h-48m": {
+      "serverDecodeMs": 1641,
+      "id": "d1h-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 3600,
+      "bytes": 43200620,
+      "bitrate": 96001
+    },
+    "m2m": {
+      "serverDecodeMs": 97,
+      "id": "m2m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 122,
+      "bytes": 2929728,
+      "bitrate": 192113
+    },
+    "f00": {
+      "serverDecodeMs": 127,
+      "id": "f00",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f01": {
+      "serverDecodeMs": 128,
+      "id": "f01",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f02": {
+      "serverDecodeMs": 129,
+      "id": "f02",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f03": {
+      "serverDecodeMs": 129,
+      "id": "f03",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f04": {
+      "serverDecodeMs": 128,
+      "id": "f04",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f05": {
+      "serverDecodeMs": 129,
+      "id": "f05",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f06": {
+      "serverDecodeMs": 129,
+      "id": "f06",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f07": {
+      "serverDecodeMs": 127,
+      "id": "f07",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f08": {
+      "serverDecodeMs": 128,
+      "id": "f08",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f09": {
+      "serverDecodeMs": 134,
+      "id": "f09",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f10": {
+      "serverDecodeMs": 130,
+      "id": "f10",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f11": {
+      "serverDecodeMs": 129,
+      "id": "f11",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f12": {
+      "serverDecodeMs": 132,
+      "id": "f12",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f13": {
+      "serverDecodeMs": 129,
+      "id": "f13",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f14": {
+      "serverDecodeMs": 129,
+      "id": "f14",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f15": {
+      "serverDecodeMs": 129,
+      "id": "f15",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f16": {
+      "serverDecodeMs": 130,
+      "id": "f16",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f17": {
+      "serverDecodeMs": 127,
+      "id": "f17",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f18": {
+      "serverDecodeMs": 132,
+      "id": "f18",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f19": {
+      "serverDecodeMs": 129,
+      "id": "f19",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    }
+  },
+  "cells": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "sillon",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 65.5,
+        "p25": 62.09999990463257,
+        "p75": 70.10000002384186,
+        "min": 61.5,
+        "max": 86.20000004768372,
+        "n": 5,
+        "values": [
+          62.1,
+          65.5,
+          61.5,
+          70.1,
+          86.2
+        ]
+      },
+      "complete": {
+        "median": 65.5,
+        "p25": 62.09999990463257,
+        "p75": 70.10000002384186,
+        "min": 61.5,
+        "max": 86.20000004768372,
+        "n": 5,
+        "values": [
+          62.1,
+          65.5,
+          61.5,
+          70.1,
+          86.2
+        ]
+      },
+      "half": {
+        "median": 65.5,
+        "p25": 62.09999990463257,
+        "p75": 70.10000002384186,
+        "min": 61.5,
+        "max": 86.20000004768372,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 67.375,
+        "p25": 67.203125,
+        "p75": 67.375,
+        "min": 67.125,
+        "max": 67.71875,
+        "n": 5,
+        "values": [
+          67.2,
+          67.38,
+          67.72,
+          67.13,
+          67.38
+        ]
+      },
+      "retainedMB": {
+        "median": 64.265625,
+        "p25": 64.09375,
+        "p75": 64.515625,
+        "min": 63.765625,
+        "max": 64.90625,
+        "n": 5,
+        "values": [
+          64.09,
+          64.27,
+          64.52,
+          64.91,
+          63.77
+        ]
+      },
+      "jsKB": {
+        "median": 82.4189453125,
+        "p25": 82.4189453125,
+        "p75": 82.4189453125,
+        "min": 82.4189453125,
+        "max": 82.4189453125,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.13,
+        "p25": 0.12,
+        "p75": 0.13999999999999968,
+        "min": 0.1100000000000001,
+        "max": 0.14,
+        "n": 5
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 6.800000071525574,
+        "p25": 6.699999928474426,
+        "p75": 7.300000071525574,
+        "min": 5.899999976158142,
+        "max": 8.299999952316284,
+        "n": 5
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.385467529296875,
+        "p25": 3.38531494140625,
+        "p75": 3.4020538330078125,
+        "min": 3.385303497314453,
+        "max": 13.38015079498291,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.9999999999999549,
+        "p25": 0.9999999999999549,
+        "p75": 0.9999999999999549,
+        "min": 0.9999999999999549,
+        "max": 0.9999999999999549,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 4.470348358154297e-7,
+        "p25": 4.470348358154297e-7,
+        "p75": 4.470348358154297e-7,
+        "min": 4.470348358154297e-7,
+        "max": 4.470348358154297e-7,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "ws",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 164.29999995231628,
+        "p25": 162.89999997615814,
+        "p75": 167.5,
+        "min": 162.19999992847443,
+        "max": 169.69999992847443,
+        "n": 5,
+        "values": [
+          169.7,
+          162.2,
+          164.3,
+          162.9,
+          167.5
+        ]
+      },
+      "complete": {
+        "median": 164.29999995231628,
+        "p25": 162.89999997615814,
+        "p75": 167.5,
+        "min": 162.19999992847443,
+        "max": 169.69999992847443,
+        "n": 5,
+        "values": [
+          169.7,
+          162.2,
+          164.3,
+          162.9,
+          167.5
+        ]
+      },
+      "half": {
+        "median": 164.29999995231628,
+        "p25": 162.89999997615814,
+        "p75": 167.5,
+        "min": 162.19999992847443,
+        "max": 169.69999992847443,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 119.96875,
+        "p25": 119.671875,
+        "p75": 120.09375,
+        "min": 118.953125,
+        "max": 120.109375,
+        "n": 5,
+        "values": [
+          118.95,
+          119.67,
+          120.09,
+          120.11,
+          119.97
+        ]
+      },
+      "retainedMB": {
+        "median": 161.59375,
+        "p25": 161.25,
+        "p75": 162.0625,
+        "min": 158.640625,
+        "max": 163.34375,
+        "n": 5,
+        "values": [
+          161.59,
+          158.64,
+          163.34,
+          162.06,
+          161.25
+        ]
+      },
+      "jsKB": {
+        "median": 18.5771484375,
+        "p25": 18.5771484375,
+        "p75": 18.5771484375,
+        "min": 18.5771484375,
+        "max": 18.5771484375,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.17000000000000004,
+        "p25": 0.17000000000000004,
+        "p75": 0.17000000000000004,
+        "min": 0.16000000000000003,
+        "max": 0.19000000000000006,
+        "n": 5
+      },
+      "tbt": {
+        "median": 47,
+        "p25": 46,
+        "p75": 52,
+        "min": 37,
+        "max": 56,
+        "n": 5,
+        "values": [
+          56,
+          46,
+          52,
+          37,
+          47
+        ]
+      },
+      "maxLag": {
+        "median": 96.10000002384186,
+        "p25": 92.89999997615814,
+        "p75": 99.20000004768372,
+        "min": 85.60000002384186,
+        "max": 103.60000002384186,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 0.3999999761581421,
+        "p25": 0.2999999523162842,
+        "p75": 0.5,
+        "min": 0.19999992847442627,
+        "max": 12.300000071525574,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 0.3999999761581421,
+        "p25": 0.2999999523162842,
+        "p75": 0.5,
+        "min": 0.19999992847442627,
+        "max": 12.300000071525574,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 2.926711082458496,
+        "p25": 2.9266347885131836,
+        "p75": 2.9273977279663086,
+        "min": 2.9266233444213867,
+        "max": 2.9274511337280273,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.9787340215508501,
+        "p25": 0.9787340215508501,
+        "p75": 0.9787340215508501,
+        "min": 0.9787340215508501,
+        "max": 0.9787340215508501,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 0.23817451298236847,
+        "p25": 0.23817451298236847,
+        "p75": 0.23817451298236847,
+        "min": 0.23817451298236847,
+        "max": 0.23817451298236847,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "sillon",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 266.5,
+        "p25": 265,
+        "p75": 267.40000009536743,
+        "min": 262.60000002384186,
+        "max": 269.10000002384186,
+        "n": 5,
+        "values": [
+          269.1,
+          266.5,
+          267.4,
+          265,
+          262.6
+        ]
+      },
+      "complete": {
+        "median": 266.5,
+        "p25": 265,
+        "p75": 267.40000009536743,
+        "min": 262.60000002384186,
+        "max": 269.10000002384186,
+        "n": 5,
+        "values": [
+          269.1,
+          266.5,
+          267.4,
+          265,
+          262.6
+        ]
+      },
+      "half": {
+        "median": 266.5,
+        "p25": 265,
+        "p75": 267.40000009536743,
+        "min": 262.60000002384186,
+        "max": 269.10000002384186,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 282.359375,
+        "p25": 282.328125,
+        "p75": 283.03125,
+        "min": 280.28125,
+        "max": 283.09375,
+        "n": 5,
+        "values": [
+          283.09,
+          282.36,
+          280.28,
+          283.03,
+          282.33
+        ]
+      },
+      "retainedMB": {
+        "median": 184.03125,
+        "p25": 182.5625,
+        "p75": 184.40625,
+        "min": 182.28125,
+        "max": 184.421875,
+        "n": 5,
+        "values": [
+          184.42,
+          184.41,
+          182.56,
+          182.28,
+          184.03
+        ]
+      },
+      "jsKB": {
+        "median": 82.4189453125,
+        "p25": 82.4189453125,
+        "p75": 82.4189453125,
+        "min": 82.4189453125,
+        "max": 82.4189453125,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.36,
+        "p25": 0.33999999999999997,
+        "p75": 0.36,
+        "min": 0.32999999999999996,
+        "max": 0.39,
+        "n": 5
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 36.799999952316284,
+        "p25": 27.100000023841858,
+        "p75": 43.10000002384186,
+        "min": 21.600000023841858,
+        "max": 46.40000009536743,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 0.9000000953674316,
+        "p25": 0.8999999761581421,
+        "p75": 1.5,
+        "min": 0.7999999523162842,
+        "max": 3.799999952316284,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 0.9000000953674316,
+        "p25": 0.8999999761581421,
+        "p75": 1.5,
+        "min": 0.7999999523162842,
+        "max": 3.799999952316284,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 104.28636837005615,
+        "p25": 3.496692657470703,
+        "p75": 104.39673900604248,
+        "min": 3.4966697692871094,
+        "max": 104.50688076019287,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.999999999999957,
+        "p25": 0.999999999999957,
+        "p75": 0.999999999999957,
+        "min": 0.999999999999957,
+        "max": 0.999999999999957,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 5.960464477539062e-7,
+        "p25": 5.960464477539062e-7,
+        "p75": 5.960464477539062e-7,
+        "min": 5.960464477539062e-7,
+        "max": 5.960464477539062e-7,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "ws",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 372.7999999523163,
+        "p25": 364.7999999523163,
+        "p75": 381.2999999523163,
+        "min": 359.7999999523163,
+        "max": 387.60000002384186,
+        "n": 5,
+        "values": [
+          387.6,
+          381.3,
+          372.8,
+          364.8,
+          359.8
+        ]
+      },
+      "complete": {
+        "median": 372.7999999523163,
+        "p25": 364.7999999523163,
+        "p75": 381.2999999523163,
+        "min": 359.7999999523163,
+        "max": 387.60000002384186,
+        "n": 5,
+        "values": [
+          387.6,
+          381.3,
+          372.8,
+          364.8,
+          359.8
+        ]
+      },
+      "half": {
+        "median": 372.7999999523163,
+        "p25": 364.7999999523163,
+        "p75": 381.2999999523163,
+        "min": 359.7999999523163,
+        "max": 387.60000002384186,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 327.578125,
+        "p25": 326.671875,
+        "p75": 327.75,
+        "min": 326.671875,
+        "max": 328.28125,
+        "n": 5,
+        "values": [
+          328.28,
+          326.67,
+          326.67,
+          327.75,
+          327.58
+        ]
+      },
+      "retainedMB": {
+        "median": 309.84375,
+        "p25": 309.8125,
+        "p75": 310.203125,
+        "min": 306.484375,
+        "max": 310.359375,
+        "n": 5,
+        "values": [
+          310.36,
+          309.84,
+          306.48,
+          309.81,
+          310.2
+        ]
+      },
+      "jsKB": {
+        "median": 18.5771484375,
+        "p25": 18.5771484375,
+        "p75": 18.5771484375,
+        "min": 18.5771484375,
+        "max": 18.5771484375,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.42000000000000004,
+        "p25": 0.42000000000000004,
+        "p75": 0.42000000000000004,
+        "min": 0.41000000000000003,
+        "max": 0.43000000000000005,
+        "n": 5
+      },
+      "tbt": {
+        "median": 48,
+        "p25": 40,
+        "p75": 52,
+        "min": 39,
+        "max": 54,
+        "n": 5,
+        "values": [
+          52,
+          54,
+          48,
+          40,
+          39
+        ]
+      },
+      "maxLag": {
+        "median": 86.09999990463257,
+        "p25": 84.5,
+        "p75": 86.5,
+        "min": 71.39999997615814,
+        "max": 89.20000004768372,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.2999999523162842,
+        "p75": 0.3999999761581421,
+        "min": 0.2999999523162842,
+        "max": 0.3999999761581421,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 0.30000007152557373,
+        "p25": 0.2999999523162842,
+        "p75": 0.3999999761581421,
+        "min": 0.2999999523162842,
+        "max": 0.3999999761581421,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 44.38708305358887,
+        "p25": 44.361703872680664,
+        "p75": 44.45170783996582,
+        "min": 7.091364860534668,
+        "max": 44.52694129943848,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.9761756197519048,
+        "p25": 0.9761756197519048,
+        "p75": 0.9761756197519048,
+        "min": 0.9761756197519048,
+        "max": 0.9761756197519048,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 0.3777254968881607,
+        "p25": 0.3777254968881607,
+        "p75": 0.3777254968881607,
+        "min": 0.3777254968881607,
+        "max": 0.3777254968881607,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "sillon",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 149.10000002384186,
+        "p25": 130.10000002384186,
+        "p75": 150.5,
+        "min": 127.5,
+        "max": 157.5,
+        "n": 5,
+        "values": [
+          157.5,
+          149.1,
+          130.1,
+          150.5,
+          127.5
+        ]
+      },
+      "complete": {
+        "median": 149.10000002384186,
+        "p25": 130.10000002384186,
+        "p75": 150.5,
+        "min": 127.5,
+        "max": 157.5,
+        "n": 5,
+        "values": [
+          157.5,
+          149.1,
+          130.1,
+          150.5,
+          127.5
+        ]
+      },
+      "half": {
+        "median": 149.10000002384186,
+        "p25": 130.10000002384186,
+        "p75": 150.5,
+        "min": 127.5,
+        "max": 157.5,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 135.203125,
+        "p25": 128.96875,
+        "p75": 135.65625,
+        "min": 125.59375,
+        "max": 144.234375,
+        "n": 5,
+        "values": [
+          125.59,
+          144.23,
+          128.97,
+          135.66,
+          135.2
+        ]
+      },
+      "retainedMB": {
+        "median": 105.765625,
+        "p25": 105.28125,
+        "p75": 105.796875,
+        "min": 103,
+        "max": 108.6875,
+        "n": 5,
+        "values": [
+          108.69,
+          105.28,
+          105.8,
+          103,
+          105.77
+        ]
+      },
+      "jsKB": {
+        "median": 82.4189453125,
+        "p25": 82.4189453125,
+        "p75": 82.4189453125,
+        "min": 82.4189453125,
+        "max": 82.4189453125,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.21000000000000008,
+        "p25": 0.21000000000000008,
+        "p75": 0.21000000000000008,
+        "min": 0.21000000000000008,
+        "max": 0.22000000000000008,
+        "n": 5
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 19.5,
+        "p25": 19.200000047683716,
+        "p75": 19.700000047683716,
+        "min": 17.59999990463257,
+        "max": 20.600000023841858,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 2.600000023841858,
+        "p25": 1.75,
+        "p75": 7.849999964237213,
+        "min": 0.8999999761581421,
+        "max": 13.099999904632568,
+        "n": 3
+      },
+      "inputMax": {
+        "median": 2.600000023841858,
+        "p25": 1.75,
+        "p75": 7.849999964237213,
+        "min": 0.8999999761581421,
+        "max": 13.099999904632568,
+        "n": 3
+      },
+      "jsHeapMB": {
+        "median": 3.4168214797973633,
+        "p25": 3.416497230529785,
+        "p75": 3.4168291091918945,
+        "min": 3.4162187576293945,
+        "max": 3.976109504699707,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.9999999999998569,
+        "p25": 0.9999999999998569,
+        "p75": 0.9999999999998569,
+        "min": 0.9999999999998569,
+        "max": 0.9999999999998569,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 5.364418029785156e-7,
+        "p25": 5.364418029785156e-7,
+        "p75": 5.364418029785156e-7,
+        "min": 5.364418029785156e-7,
+        "max": 5.364418029785156e-7,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "ws",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 231.60000002384186,
+        "p25": 229.5,
+        "p75": 244.39999997615814,
+        "min": 225.19999992847443,
+        "max": 254.89999997615814,
+        "n": 5,
+        "values": [
+          225.2,
+          231.6,
+          254.9,
+          229.5,
+          244.4
+        ]
+      },
+      "complete": {
+        "median": 231.60000002384186,
+        "p25": 229.5,
+        "p75": 244.39999997615814,
+        "min": 225.19999992847443,
+        "max": 254.89999997615814,
+        "n": 5,
+        "values": [
+          225.2,
+          231.6,
+          254.9,
+          229.5,
+          244.4
+        ]
+      },
+      "half": {
+        "median": 231.60000002384186,
+        "p25": 229.5,
+        "p75": 244.39999997615814,
+        "min": 225.19999992847443,
+        "max": 254.89999997615814,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 136.109375,
+        "p25": 135.140625,
+        "p75": 220.328125,
+        "min": 134.4375,
+        "max": 243.296875,
+        "n": 5,
+        "values": [
+          136.11,
+          135.14,
+          243.3,
+          134.44,
+          220.33
+        ]
+      },
+      "retainedMB": {
+        "median": 209.453125,
+        "p25": 205.90625,
+        "p75": 215.96875,
+        "min": 205.46875,
+        "max": 216.515625,
+        "n": 5,
+        "values": [
+          209.45,
+          205.91,
+          215.97,
+          205.47,
+          216.52
+        ]
+      },
+      "jsKB": {
+        "median": 18.5771484375,
+        "p25": 18.5771484375,
+        "p75": 18.5771484375,
+        "min": 18.5771484375,
+        "max": 18.5771484375,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 0.27000000000000013,
+        "p25": 0.2600000000000001,
+        "p75": 0.27000000000000013,
+        "min": 0.2500000000000001,
+        "max": 0.29999999999999993,
+        "n": 5
+      },
+      "tbt": {
+        "median": 43,
+        "p25": 39,
+        "p75": 47,
+        "min": 36,
+        "max": 63,
+        "n": 5,
+        "values": [
+          36,
+          43,
+          63,
+          39,
+          47
+        ]
+      },
+      "maxLag": {
+        "median": 90,
+        "p25": 85.20000004768372,
+        "p75": 92.60000002384186,
+        "min": 79.59999990463257,
+        "max": 117.39999997615814,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 0.3999999761581421,
+        "p25": 0.3999999761581421,
+        "p75": 0.3999999761581421,
+        "min": 0.2999999523162842,
+        "max": 7.899999976158142,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 0.3999999761581421,
+        "p25": 0.3999999761581421,
+        "p75": 0.3999999761581421,
+        "min": 0.2999999523162842,
+        "max": 7.899999976158142,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 5.298998832702637,
+        "p25": 5.296687126159668,
+        "p75": 20.3177547454834,
+        "min": 5.281924247741699,
+        "max": 21.065217971801758,
+        "n": 5
+      },
+      "corr": {
+        "median": 0.9961025649808971,
+        "p25": 0.9961025649808971,
+        "p75": 0.9961025649808971,
+        "min": 0.9961025649808971,
+        "max": 0.9961025649808971,
+        "n": 5
+      },
+      "maxErr": {
+        "median": 0.20384221524000168,
+        "p25": 0.20384221524000168,
+        "p75": 0.20384221524000168,
+        "min": 0.20384221524000168,
+        "max": 0.20384221524000168,
+        "n": 5
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5
+      }
+    }
+  ],
+  "feed": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "sillon",
+      "runs": 5,
+      "errors": 0,
+      "method": "useAudio",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 902.2000000476837,
+        "p25": 900.8999999761581,
+        "p75": 912.5,
+        "min": 887.8999999761581,
+        "max": 915.5,
+        "n": 5,
+        "values": [
+          902.2,
+          912.5,
+          900.9,
+          887.9,
+          915.5
+        ]
+      },
+      "half": {
+        "median": 902.2000000476837,
+        "p25": 900.8999999761581,
+        "p75": 912.5,
+        "min": 887.8999999761581,
+        "max": 915.5,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 826.0625,
+        "p25": 815.703125,
+        "p75": 832.21875,
+        "min": 746.765625,
+        "max": 862.5625,
+        "n": 5,
+        "values": [
+          746.77,
+          826.06,
+          862.56,
+          832.22,
+          815.7
+        ]
+      },
+      "retainedMB": {
+        "median": 475.796875,
+        "p25": 474.640625,
+        "p75": 477.84375,
+        "min": 470.640625,
+        "max": 480.65625,
+        "n": 5,
+        "values": [
+          470.64,
+          477.84,
+          480.66,
+          474.64,
+          475.8
+        ]
+      },
+      "jsKB": {
+        "median": 81.2021484375,
+        "p25": 81.2021484375,
+        "p75": 81.2021484375,
+        "min": 81.2021484375,
+        "max": 81.2021484375,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 3.3499999999999996,
+        "p25": 3.3099999999999996,
+        "p75": 3.3499999999999996,
+        "min": 3.25,
+        "max": 3.3600000000000003,
+        "n": 5
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 111.5,
+        "p25": 110,
+        "p75": 115.10000002384186,
+        "min": 85.89999997615814,
+        "max": 119.89999997615814,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 25.199999928474426,
+        "p25": 24.700000047683716,
+        "p75": 27.799999952316284,
+        "min": 21.700000047683716,
+        "max": 32.800000071525574,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 25.199999928474426,
+        "p25": 24.700000047683716,
+        "p75": 27.799999952316284,
+        "min": 21.700000047683716,
+        "max": 32.800000071525574,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 448.9957151412964,
+        "p25": 390.83257484436035,
+        "p75": 449.00585079193115,
+        "min": 336.0629243850708,
+        "max": 510.44134521484375,
+        "n": 5
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "ws",
+      "runs": 5,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 704,
+        "p25": 668.8999999761581,
+        "p75": 718.2000000476837,
+        "min": 658.6000000238419,
+        "max": 733.8000000715256,
+        "n": 5,
+        "values": [
+          704,
+          733.8,
+          668.9,
+          718.2,
+          658.6
+        ]
+      },
+      "half": {
+        "median": 704,
+        "p25": 668.8999999761581,
+        "p75": 718.2000000476837,
+        "min": 658.6000000238419,
+        "max": 733.8000000715256,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 1557.4375,
+        "p25": 1517.140625,
+        "p75": 1652.453125,
+        "min": 1503.75,
+        "max": 1787.0625,
+        "n": 5,
+        "values": [
+          1652.45,
+          1557.44,
+          1503.75,
+          1787.06,
+          1517.14
+        ]
+      },
+      "retainedMB": {
+        "median": 1484.0625,
+        "p25": 1473.96875,
+        "p75": 1508.9375,
+        "min": 1447.5,
+        "max": 1525.421875,
+        "n": 5,
+        "values": [
+          1525.42,
+          1473.97,
+          1447.5,
+          1508.94,
+          1484.06
+        ]
+      },
+      "jsKB": {
+        "median": 17.431640625,
+        "p25": 17.431640625,
+        "p75": 17.431640625,
+        "min": 17.431640625,
+        "max": 17.431640625,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 4.6899999999999995,
+        "p25": 4.65,
+        "p75": 4.73,
+        "min": 4.510000000000001,
+        "max": 4.73,
+        "n": 5
+      },
+      "tbt": {
+        "median": 46,
+        "p25": 44,
+        "p75": 56,
+        "min": 44,
+        "max": 78,
+        "n": 5,
+        "values": [
+          44,
+          78,
+          46,
+          56,
+          44
+        ]
+      },
+      "maxLag": {
+        "median": 145,
+        "p25": 138.89999997615814,
+        "p75": 167.19999992847443,
+        "min": 133.59999990463257,
+        "max": 195.39999997615814,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 69,
+        "p25": 49.5,
+        "p75": 69.10000002384186,
+        "min": 38.10000002384186,
+        "max": 69.29999995231628,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 69,
+        "p25": 49.5,
+        "p75": 69.10000002384186,
+        "min": 38.10000002384186,
+        "max": 69.29999995231628,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 245.74167919158936,
+        "p25": 234.82527446746826,
+        "p75": 255.65746974945068,
+        "min": 234.76289653778076,
+        "max": 289.7453451156616,
+        "n": 5
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    }
+  ],
+  "runtime": []
+}

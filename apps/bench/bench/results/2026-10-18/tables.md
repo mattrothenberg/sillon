@@ -2,36 +2,91 @@
 
 ### Chromium, local server, CBR 128 kbps stereo 44.1 kHz
 
-| file | contender | first bars | half drawn | complete | peak memory | CPU | TBT | max lag | input p95 / max | accuracy (corr / max err) | runs |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| d30s | sillon | 73 ms <sub>72–77</sub> | 63 ms | 73 ms <sub>72–77</sub> | 53 MB | 0.15 s | 0 ms | 1 ms | – / – | 1.0000 / 0.000 | 10/10 |
-| d30s | sillon (fallback) | 61 ms <sub>58–64</sub> | 61 ms | 61 ms <sub>58–64</sub> | 68 MB | 0.13 s | 0 ms | 4 ms | – / – | 1.0000 / 0.000 | 10/11 ⚠ |
-| d30s | wavesurfer | 154 ms <sub>138–167</sub> | 154 ms | 154 ms <sub>138–167</sub> | 120 MB | 0.17 s | 41 ms | 87 ms | 1 ms / 1 ms | 0.9787 / 0.238 | 10/10 |
-| d30s | wavesurfer + peaks | 37 ms <sub>36–43</sub> | 37 ms | 37 ms <sub>36–43</sub> | 35 MB | 0.07 s | 0 ms | 1 ms | – / – | – | 10/10 |
-| d30s | naive | 172 ms <sub>168–178</sub> | 172 ms | 172 ms <sub>168–178</sub> | 148 MB | 0.18 s | 50 ms | 89 ms | 8 ms / 8 ms | 0.9976 / 0.233 | 10/10 |
-| d5m | sillon | 120 ms <sub>117–122</sub> | 226 ms | 389 ms <sub>375–400</sub> | 90 MB | 0.50 s | 0 ms | 9 ms | 7 ms / 7 ms | 1.0000 / 0.000 | 10/10 |
-| d5m | sillon (fallback) | 267 ms <sub>264–271</sub> | 267 ms | 267 ms <sub>264–271</sub> | 285 MB | 0.35 s | 0 ms | 22 ms | 2 ms / 2 ms | 1.0000 / 0.000 | 10/10 |
-| d5m | wavesurfer | 369 ms <sub>366–374</sub> | 369 ms | 369 ms <sub>366–374</sub> | 327 MB | 0.42 s | 44 ms | 76 ms | 0 ms / 0 ms | 0.9762 / 0.378 | 10/10 |
-| d5m | wavesurfer + peaks | 41 ms <sub>40–43</sub> | 41 ms | 41 ms <sub>40–43</sub> | 35 MB | 0.08 s | 0 ms | 1 ms | – / – | – | 10/10 |
-| d5m | naive | 539 ms <sub>533–549</sub> | 539 ms | 539 ms <sub>533–549</sub> | 400 MB | 0.58 s | 44 ms | 86 ms | 6 ms / 6 ms | 0.9971 / 0.372 | 10/10 |
-| d1h | sillon | 118 ms <sub>115–123</sub> | 2.03 s | 3.97 s <sub>3.92s–4.13s</sub> | 165 MB | 4.39 s | 0 ms | 9 ms | 15 ms / 16 ms | 1.0000 / 0.000 | 10/11 ⚠ |
-| d1h | sillon (fallback) | 2.71 s <sub>2.70s–2.75s</sub> | 2.71 s | 2.71 s <sub>2.70s–2.75s</sub> | 3.27 GB | 2.97 s | 312 ms | 346 ms | 291 ms / 291 ms | 1.0000 / 0.000 | 10/10 |
-| d1h | wavesurfer | 3.02 s <sub>2.98s–3.07s</sub> | 3.02 s | 3.02 s <sub>2.98s–3.07s</sub> | 3.17 GB | 3.27 s | 130 ms | 135 ms | 29 ms / 57 ms | 0.9916 / 0.261 | 10/10 |
-| d1h | wavesurfer + peaks | 38 ms <sub>35–41</sub> | 38 ms | 38 ms <sub>35–41</sub> | 35 MB | 0.07 s | 0 ms | 1 ms | – / – | – | 10/10 |
-| d1h | naive | 5.06 s <sub>5.04s–5.08s</sub> | 5.06 s | 5.06 s <sub>5.04s–5.08s</sub> | 4.08 GB | 5.29 s | 559 ms | 569 ms | 12 ms / 484 ms | 0.9994 / 0.249 | 10/10 |
-| d3h | sillon | 117 ms <sub>115–121</sub> | 5.90 s | 11.70 s <sub>11.59s–11.73s</sub> | 216 MB | 12.56 s | 0 ms | 9 ms | 15 ms / 17 ms | 1.0000 / 0.000 | 10/10 |
-| d3h | sillon (fallback) | 7.97 s <sub>7.94s–8.01s</sub> | 7.97 s | 7.97 s <sub>7.94s–8.01s</sub> | 11.22 GB | 8.46 s | 977 ms | 1.02 s | 0 ms / 990 ms | 1.0000 / 0.000 | 10/10 |
-| d3h | wavesurfer | 8.74 s <sub>8.65s–8.83s</sub> | 8.74 s | 8.74 s <sub>8.65s–8.83s</sub> | 9.21 GB | 9.31 s | 376 ms | 390 ms | 0 ms / 329 ms | 0.9934 / 0.234 | 10/10 |
-| d3h | wavesurfer + peaks | 36 ms <sub>34–39</sub> | 36 ms | 36 ms <sub>34–39</sub> | 35 MB | 0.08 s | 0 ms | 1 ms | – / – | – | 10/10 |
-| d3h | naive | 14.95 s <sub>14.84s–15.05s</sub> | 14.95 s | 14.95 s <sub>14.84s–15.05s</sub> | 12.09 GB | 15.52 s | 1.67 s | 1.69 s | 0 ms / 1.63 s | 0.9994 / 0.192 | 10/10 |
+| file | contender | first bars | half drawn | complete | peak memory | while open | CPU | TBT | max lag | input p95 / max | JS | accuracy (corr / max err) | runs |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| d30s | sillon | 73 ms <sub>72–77</sub> | 63 ms | 73 ms <sub>72–77</sub> | 53 MB | – | 0.15 s | 0 ms | 1 ms | – / – | – | 1.0000 / 0.000 | 10/10 |
+| d30s | sillon (fallback) | 61 ms <sub>58–64</sub> | 61 ms | 61 ms <sub>58–64</sub> | 68 MB | – | 0.13 s | 0 ms | 4 ms | – / – | – | 1.0000 / 0.000 | 10/11 ⚠ |
+| d30s | wavesurfer | 154 ms <sub>138–167</sub> | 154 ms | 154 ms <sub>138–167</sub> | 120 MB | – | 0.17 s | 41 ms | 87 ms | 1 ms / 1 ms | – | 0.9787 / 0.238 | 10/10 |
+| d30s | wavesurfer + peaks | 37 ms <sub>36–43</sub> | 37 ms | 37 ms <sub>36–43</sub> | 35 MB | – | 0.07 s | 0 ms | 1 ms | – / – | – | – | 10/10 |
+| d30s | naive | 172 ms <sub>168–178</sub> | 172 ms | 172 ms <sub>168–178</sub> | 148 MB | – | 0.18 s | 50 ms | 89 ms | 8 ms / 8 ms | – | 0.9976 / 0.233 | 10/10 |
+| d5m | sillon | 120 ms <sub>117–122</sub> | 226 ms | 389 ms <sub>375–400</sub> | 90 MB | – | 0.50 s | 0 ms | 9 ms | 7 ms / 7 ms | – | 1.0000 / 0.000 | 10/10 |
+| d5m | sillon (fallback) | 267 ms <sub>264–271</sub> | 267 ms | 267 ms <sub>264–271</sub> | 285 MB | – | 0.35 s | 0 ms | 22 ms | 2 ms / 2 ms | – | 1.0000 / 0.000 | 10/10 |
+| d5m | wavesurfer | 369 ms <sub>366–374</sub> | 369 ms | 369 ms <sub>366–374</sub> | 327 MB | – | 0.42 s | 44 ms | 76 ms | 0 ms / 0 ms | – | 0.9762 / 0.378 | 10/10 |
+| d5m | wavesurfer + peaks | 41 ms <sub>40–43</sub> | 41 ms | 41 ms <sub>40–43</sub> | 35 MB | – | 0.08 s | 0 ms | 1 ms | – / – | – | – | 10/10 |
+| d5m | naive | 539 ms <sub>533–549</sub> | 539 ms | 539 ms <sub>533–549</sub> | 400 MB | – | 0.58 s | 44 ms | 86 ms | 6 ms / 6 ms | – | 0.9971 / 0.372 | 10/10 |
+| d1h | sillon | 118 ms <sub>115–123</sub> | 2.03 s | 3.97 s <sub>3.92s–4.13s</sub> | 165 MB | – | 4.39 s | 0 ms | 9 ms | 15 ms / 16 ms | – | 1.0000 / 0.000 | 10/11 ⚠ |
+| d1h | sillon (fallback) | 2.71 s <sub>2.70s–2.75s</sub> | 2.71 s | 2.71 s <sub>2.70s–2.75s</sub> | 3.27 GB | – | 2.97 s | 312 ms | 346 ms | 291 ms / 291 ms | – | 1.0000 / 0.000 | 10/10 |
+| d1h | wavesurfer | 3.02 s <sub>2.98s–3.07s</sub> | 3.02 s | 3.02 s <sub>2.98s–3.07s</sub> | 3.17 GB | – | 3.27 s | 130 ms | 135 ms | 29 ms / 57 ms | – | 0.9916 / 0.261 | 10/10 |
+| d1h | wavesurfer + peaks | 38 ms <sub>35–41</sub> | 38 ms | 38 ms <sub>35–41</sub> | 35 MB | – | 0.07 s | 0 ms | 1 ms | – / – | – | – | 10/10 |
+| d1h | naive | 5.06 s <sub>5.04s–5.08s</sub> | 5.06 s | 5.06 s <sub>5.04s–5.08s</sub> | 4.08 GB | – | 5.29 s | 559 ms | 569 ms | 12 ms / 484 ms | – | 0.9994 / 0.249 | 10/10 |
+| d3h | sillon | 117 ms <sub>115–121</sub> | 5.90 s | 11.70 s <sub>11.59s–11.73s</sub> | 216 MB | – | 12.56 s | 0 ms | 9 ms | 15 ms / 17 ms | – | 1.0000 / 0.000 | 10/10 |
+| d3h | sillon (fallback) | 7.97 s <sub>7.94s–8.01s</sub> | 7.97 s | 7.97 s <sub>7.94s–8.01s</sub> | 11.22 GB | – | 8.46 s | 977 ms | 1.02 s | 0 ms / 990 ms | – | 1.0000 / 0.000 | 10/10 |
+| d3h | wavesurfer | 8.74 s <sub>8.65s–8.83s</sub> | 8.74 s | 8.74 s <sub>8.65s–8.83s</sub> | 9.21 GB | – | 9.31 s | 376 ms | 390 ms | 0 ms / 329 ms | – | 0.9934 / 0.234 | 10/10 |
+| d3h | wavesurfer + peaks | 36 ms <sub>34–39</sub> | 36 ms | 36 ms <sub>34–39</sub> | 35 MB | – | 0.08 s | 0 ms | 1 ms | – / – | – | – | 10/10 |
+| d3h | naive | 14.95 s <sub>14.84s–15.05s</sub> | 14.95 s | 14.95 s <sub>14.84s–15.05s</sub> | 12.09 GB | – | 15.52 s | 1.67 s | 1.69 s | 0 ms / 1.63 s | – | 0.9994 / 0.192 | 10/10 |
 
 ### Chromium, 50 Mbps / 40 ms (shaped at the server)
 
-| file | contender | first bars | half drawn | complete | peak memory | CPU | TBT | max lag | input p95 / max | accuracy (corr / max err) | runs |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| d5m | naive | 1.38 s <sub>1.38s–1.38s</sub> | 1.38 s | 1.38 s <sub>1.38s–1.38s</sub> | 468 MB | 0.67 s | 50 ms | 92 ms | 44 ms / 44 ms | 0.9971 / 0.372 | 1/1 |
+| file | contender | first bars | half drawn | complete | peak memory | while open | CPU | TBT | max lag | input p95 / max | JS | accuracy (corr / max err) | runs |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| d5m | sillon | 274 ms <sub>272–275</sub> | 588 ms | 974 ms <sub>972–975</sub> | 97 MB | – | 0.55 s | 0 ms | 3 ms | 14 ms / 14 ms | – | 1.0000 / 0.000 | 7/7 |
+| d5m | sillon (fallback) | 1.14 s <sub>1.13s–1.14s</sub> | 1.14 s | 1.14 s <sub>1.13s–1.14s</sub> | 292 MB | – | 0.40 s | 0 ms | 23 ms | 0 ms / 0 ms | – | 1.0000 / 0.000 | 7/7 |
+| d5m | wavesurfer | 1.24 s <sub>1.24s–1.26s</sub> | 1.24 s | 1.24 s <sub>1.24s–1.26s</sub> | 336 MB | – | 0.52 s | 41 ms | 84 ms | 71 ms / 71 ms | – | 0.9762 / 0.378 | 7/7 |
+| d5m | wavesurfer + peaks | 196 ms <sub>195–198</sub> | 196 ms | 196 ms <sub>195–198</sub> | 38 MB | – | 0.08 s | 0 ms | 2 ms | 0 ms / 0 ms | – | – | 7/7 |
+| d5m | naive | 1.38 s <sub>1.35s–1.39s</sub> | 1.38 s | 1.38 s <sub>1.35s–1.39s</sub> | 456 MB | – | 0.67 s | 46 ms | 73 ms | 29 ms / 29 ms | – | 0.9971 / 0.372 | 7/7 |
+| d1h | sillon | 266 ms <sub>264–277</sub> | 4.83 s | 9.43 s <sub>9.43s–9.43s</sub> | 203 MB | – | 5.09 s | 0 ms | 10 ms | 15 ms / 17 ms | – | 1.0000 / 0.000 | 7/7 |
+| d1h | sillon (fallback) | 11.93 s <sub>11.91s–11.96s</sub> | 11.93 s | 11.93 s <sub>11.91s–11.96s</sub> | 3.24 GB | – | 3.53 s | 282 ms | 333 ms | 0 ms / 273 ms | – | 1.0000 / 0.000 | 7/7 |
+| d1h | wavesurfer | 12.24 s <sub>12.21s–12.24s</sub> | 12.24 s | 12.24 s <sub>12.21s–12.24s</sub> | 3.15 GB | – | 3.96 s | 121 ms | 117 ms | 0 ms / 70 ms | – | 0.9916 / 0.261 | 7/7 |
+| d1h | wavesurfer + peaks | 195 ms <sub>194–197</sub> | 195 ms | 195 ms <sub>194–197</sub> | 37 MB | – | 0.08 s | 0 ms | 2 ms | 0 ms / 0 ms | – | – | 7/7 |
+| d1h | naive | 14.26 s <sub>14.21s–14.27s</sub> | 14.26 s | 14.26 s <sub>14.21s–14.27s</sub> | 4.07 GB | – | 5.85 s | 550 ms | 562 ms | 0 ms / 497 ms | – | 0.9994 / 0.249 | 7/7 |
+
+### Chromium, 10 Mbps / 60 ms (shaped at the server)
+
+| file | contender | first bars | half drawn | complete | peak memory | while open | CPU | TBT | max lag | input p95 / max | JS | accuracy (corr / max err) | runs |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| d5m | sillon | 381 ms <sub>375–388</sub> | 2.23 s | 4.16 s <sub>4.16s–4.16s</sub> | 113 MB | – | 1.01 s | 0 ms | 3 ms | 15 ms / 16 ms | – | 1.0000 / 0.000 | 7/7 |
+| d5m | sillon (fallback) | 4.37 s <sub>4.37s–4.38s</sub> | 4.37 s | 4.37 s <sub>4.37s–4.38s</sub> | 292 MB | – | 0.70 s | 0 ms | 32 ms | 6 ms / 12 ms | – | 1.0000 / 0.000 | 7/7 |
+| d5m | wavesurfer | 4.39 s <sub>4.38s–4.39s</sub> | 4.39 s | 4.39 s <sub>4.38s–4.39s</sub> | 395 MB | – | 0.81 s | 39 ms | 81 ms | 3 ms / 58 ms | – | 0.9762 / 0.378 | 7/7 |
+| d5m | wavesurfer + peaks | 274 ms <sub>274–277</sub> | 274 ms | 274 ms <sub>274–277</sub> | 21 MB | – | 0.09 s | 0 ms | 3 ms | 5 ms / 5 ms | – | – | 7/7 |
+| d5m | naive | 4.51 s <sub>4.50s–4.51s</sub> | 4.51 s | 4.51 s <sub>4.50s–4.51s</sub> | 424 MB | – | 0.92 s | 45 ms | 76 ms | 6 ms / 22 ms | – | 0.9971 / 0.372 | 7/7 |
+| d1h | sillon | 374 ms <sub>374–384</sub> | 23.34 s | 46.39 s <sub>46.38s–46.39s</sub> | 233 MB | – | 10.29 s | 0 ms | 3 ms | 16 ms / 18 ms | – | 1.0000 / 0.000 | 7/7 |
+| d1h | sillon (fallback) | 48.97 s <sub>48.94s–49.01s</sub> | 48.97 s | 48.97 s <sub>48.94s–49.01s</sub> | 3.04 GB | – | 6.35 s | 292 ms | 338 ms | 0 ms / 292 ms | – | 1.0000 / 0.000 | 7/7 |
+| d1h | wavesurfer | 49.16 s <sub>49.15s–49.20s</sub> | 49.16 s | 49.16 s <sub>49.15s–49.20s</sub> | 3.13 GB | – | 7.32 s | 119 ms | 119 ms | 0 ms / 41 ms | – | 0.9916 / 0.261 | 7/7 |
+| d1h | wavesurfer + peaks | 277 ms <sub>274–277</sub> | 277 ms | 277 ms <sub>274–277</sub> | 21 MB | – | 0.09 s | 0 ms | 2 ms | 4 ms / 4 ms | – | – | 7/7 |
+| d1h | naive | 51.11 s <sub>51.10s–51.19s</sub> | 51.11 s | 51.11 s <sub>51.10s–51.19s</sub> | 4.07 GB | – | 8.67 s | 541 ms | 559 ms | 0 ms / 481 ms | – | 0.9994 / 0.249 | 7/7 |
+
+### Firefox 157.0, local server
+
+| file | contender | first bars | half drawn | complete | peak memory | while open | CPU | TBT | max lag | input p95 / max | JS | accuracy (corr / max err) | runs |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| d5m | sillon | 129 ms <sub>123–137</sub> | 509 ms | 931 ms <sub>923–939</sub> | 155 MB | – | 1.34 s | – | 11 ms | 19 ms / 19 ms | – | 1.0000 / 0.000 | 6/6 |
+| d5m | sillon (fallback) | 507 ms <sub>506–510</sub> | 507 ms | 507 ms <sub>506–510</sub> | 410 MB | – | 0.74 s | – | 31 ms | 20 ms / 20 ms | – | 1.0000 / 0.000 | 5/6 ⚠ |
+| d5m | wavesurfer | 1.04 s <sub>1.04s–1.05s</sub> | 1.04 s | 1.04 s <sub>1.04s–1.05s</sub> | 341 MB | – | 1.21 s | – | 27 ms | 18 ms / 18 ms | – | 0.9772 / 0.376 | 4/4 |
+| d5m | wavesurfer + peaks | 56 ms <sub>54–57</sub> | 56 ms | 56 ms <sub>54–57</sub> | 108 MB | – | 0.22 s | – | 9 ms | 18 ms / 18 ms | – | – | 7/7 |
+| d5m | naive | 902 ms <sub>901–907</sub> | 902 ms | 902 ms <sub>901–907</sub> | 397 MB | – | 1.03 s | – | 34 ms | 100 ms / 100 ms | – | 0.9971 / 0.372 | 7/7 |
+| d1h | sillon | 139 ms <sub>136–140</sub> | 4.97 s | 9.81 s <sub>9.78s–9.95s</sub> | 510 MB | – | 14.13 s | – | 12 ms | 14 ms / 22 ms | – | 1.0000 / 0.000 | 6/6 |
+| d1h | sillon (fallback) | 4.94 s <sub>4.82s–5.05s</sub> | 4.94 s | 4.94 s <sub>4.82s–5.05s</sub> | 3.72 GB | – | 5.83 s | – | 453 ms | 9 ms / 371 ms | – | 1.0000 / 0.000 | 5/5 |
+| d1h | wavesurfer | 11.41 s <sub>11.38s–11.45s</sub> | 11.41 s | 11.41 s <sub>11.38s–11.45s</sub> | 2.91 GB | – | 13.32 s | – | 25 ms | 1 ms / 58 ms | – | 0.9925 / 0.260 | 7/7 |
+| d1h | wavesurfer + peaks | 57 ms <sub>55–58</sub> | 57 ms | 57 ms <sub>55–58</sub> | 98 MB | – | 0.15 s | – | 10 ms | 17 ms / 17 ms | – | – | 6/6 |
+| d1h | naive | 9.48 s <sub>9.44s–9.49s</sub> | 9.48 s | 9.48 s <sub>9.44s–9.49s</sub> | 4.13 GB | – | 11.10 s | – | 23 ms | 1 ms / 1.40 s | – | 0.9994 / 0.249 | 6/6 |
+
+### WebKit 27.2, local server
+
+| file | contender | first bars | half drawn | complete | peak memory | while open | CPU | TBT | max lag | input p95 / max | JS | accuracy (corr / max err) | runs |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| d5m | sillon | 96 ms <sub>95–97</sub> | 378 ms | 697 ms <sub>684–699</sub> | 116 MB | – | 0.91 s | – | 7 ms | 1 ms / 1 ms | – | 1.0000 / 0.000 | 6/6 |
+| d5m | sillon (fallback) | 306 ms <sub>304–313</sub> | 306 ms | 306 ms <sub>304–313</sub> | 192 MB | – | 0.41 s | – | 15 ms | 1 ms / 1 ms | – | 1.0000 / 0.000 | 7/7 |
+| d5m | wavesurfer | 331 ms <sub>324–332</sub> | 331 ms | 331 ms <sub>324–332</sub> | 138 MB | – | 0.42 s | – | 6 ms | 1 ms / 1 ms | – | 0.9762 / 0.378 | 6/6 |
+| d5m | wavesurfer + peaks | 41 ms <sub>39–43</sub> | 41 ms | 41 ms <sub>39–43</sub> | 44 MB | – | 0.15 s | – | 1 ms | – / – | – | – | 6/6 |
+| d5m | naive | 350 ms <sub>348–353</sub> | 350 ms | 350 ms <sub>348–353</sub> | 270 MB | – | 0.39 s | – | 29 ms | 1 ms / 1 ms | – | 0.9971 / 0.372 | 6/6 |
+| d1h | sillon | 172 ms <sub>164–180</sub> | 3.91 s | 7.64 s <sub>7.63s–7.66s</sub> | 655 MB | – | 9.00 s | – | 6 ms | 1 ms / 1 ms | – | 1.0000 / 0.000 | 6/6 |
+| d1h | sillon (fallback) | 3.27 s <sub>3.27s–3.28s</sub> | 3.27 s | 3.27 s <sub>3.27s–3.28s</sub> | 2.71 GB | – | 3.55 s | – | 237 ms | 1 ms / 227 ms | – | 1.0000 / 0.000 | 6/6 |
+| d1h | wavesurfer | 3.08 s <sub>3.08s–3.10s</sub> | 3.08 s | 3.08 s <sub>3.08s–3.10s</sub> | 1.06 GB | – | 3.29 s | – | 85 ms | 1 ms / 22 ms | – | 0.9916 / 0.261 | 7/7 |
+| d1h | wavesurfer + peaks | 29 ms <sub>29–31</sub> | 29 ms | 29 ms <sub>29–31</sub> | 180 MB | – | 0.21 s | – | 1 ms | – / – | – | – | 5/5 |
+| d1h | naive | 4.00 s <sub>3.98s–4.00s</sub> | 4.00 s | 4.00 s <sub>3.98s–4.00s</sub> | 2.82 GB | – | 4.19 s | – | 566 ms | 1 ms / 552 ms | – | 0.9994 / 0.249 | 5/5 |
 
 ### Failed runs
 
 - chromium local d30s sillon (fallback): 1/11 — harness: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:4180/blank.html
 - chromium local d1h sillon: 1/11 — harness: page.waitForFunction: Target page, context or browser has been closed
+- firefox local d5m sillon (fallback): 1/6 — harness: page.goto: Browser closed

@@ -1,6 +1,6 @@
 {
   "d30s": {
-    "serverDecodeMs": 36,
+    "serverDecodeMs": 38,
     "id": "d30s",
     "sampleRate": 44100,
     "channels": 2,
@@ -9,7 +9,7 @@
     "bitrate": 128297
   },
   "d5m": {
-    "serverDecodeMs": 206,
+    "serverDecodeMs": 200,
     "id": "d5m",
     "sampleRate": 44100,
     "channels": 2,
@@ -18,7 +18,7 @@
     "bitrate": 128030
   },
   "d1h": {
-    "serverDecodeMs": 2419,
+    "serverDecodeMs": 2194,
     "id": "d1h",
     "sampleRate": 44100,
     "channels": 2,
@@ -27,7 +27,7 @@
     "bitrate": 128002
   },
   "d3h": {
-    "serverDecodeMs": 7350,
+    "serverDecodeMs": 6518,
     "id": "d3h",
     "sampleRate": 44100,
     "channels": 2,
@@ -36,7 +36,7 @@
     "bitrate": 128000
   },
   "d5m-320": {
-    "serverDecodeMs": 239,
+    "serverDecodeMs": 235,
     "id": "d5m-320",
     "sampleRate": 44100,
     "channels": 2,
@@ -45,7 +45,7 @@
     "bitrate": 320074
   },
   "d5m-vbr": {
-    "serverDecodeMs": 250,
+    "serverDecodeMs": 185,
     "id": "d5m-vbr",
     "sampleRate": 44100,
     "channels": 2,
@@ -54,7 +54,7 @@
     "bitrate": 104477
   },
   "d5m-48m": {
-    "serverDecodeMs": 181,
+    "serverDecodeMs": 154,
     "id": "d5m-48m",
     "sampleRate": 48000,
     "channels": 1,
@@ -63,7 +63,7 @@
     "bitrate": 96016
   },
   "d1h-320": {
-    "serverDecodeMs": 2620,
+    "serverDecodeMs": 2626,
     "id": "d1h-320",
     "sampleRate": 44100,
     "channels": 2,
@@ -72,7 +72,7 @@
     "bitrate": 320005
   },
   "d1h-vbr": {
-    "serverDecodeMs": 1969,
+    "serverDecodeMs": 1986,
     "id": "d1h-vbr",
     "sampleRate": 44100,
     "channels": 2,
@@ -81,12 +81,201 @@
     "bitrate": 103311
   },
   "d1h-48m": {
-    "serverDecodeMs": 1666,
+    "serverDecodeMs": 1641,
     "id": "d1h-48m",
     "sampleRate": 48000,
     "channels": 1,
     "duration": 3600,
     "bytes": 43200620,
     "bitrate": 96001
+  },
+  "m2m": {
+    "serverDecodeMs": 97,
+    "id": "m2m",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 122,
+    "bytes": 2929728,
+    "bitrate": 192113
+  },
+  "f00": {
+    "serverDecodeMs": 127,
+    "id": "f00",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f01": {
+    "serverDecodeMs": 128,
+    "id": "f01",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f02": {
+    "serverDecodeMs": 129,
+    "id": "f02",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f03": {
+    "serverDecodeMs": 129,
+    "id": "f03",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f04": {
+    "serverDecodeMs": 128,
+    "id": "f04",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f05": {
+    "serverDecodeMs": 129,
+    "id": "f05",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f06": {
+    "serverDecodeMs": 129,
+    "id": "f06",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f07": {
+    "serverDecodeMs": 127,
+    "id": "f07",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f08": {
+    "serverDecodeMs": 128,
+    "id": "f08",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f09": {
+    "serverDecodeMs": 134,
+    "id": "f09",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f10": {
+    "serverDecodeMs": 130,
+    "id": "f10",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f11": {
+    "serverDecodeMs": 129,
+    "id": "f11",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f12": {
+    "serverDecodeMs": 132,
+    "id": "f12",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f13": {
+    "serverDecodeMs": 129,
+    "id": "f13",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f14": {
+    "serverDecodeMs": 129,
+    "id": "f14",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f15": {
+    "serverDecodeMs": 129,
+    "id": "f15",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f16": {
+    "serverDecodeMs": 130,
+    "id": "f16",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f17": {
+    "serverDecodeMs": 127,
+    "id": "f17",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f18": {
+    "serverDecodeMs": 132,
+    "id": "f18",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
+  },
+  "f19": {
+    "serverDecodeMs": 129,
+    "id": "f19",
+    "sampleRate": 44100,
+    "channels": 2,
+    "duration": 180,
+    "bytes": 2881035,
+    "bitrate": 128046
   }
 }

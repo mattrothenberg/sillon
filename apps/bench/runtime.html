@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><title>runtime</title>
+<script>
+// Counts React commits, the way React DevTools learns about them. Installed before React
+// loads; React calls onCommitFiberRoot after every commit, production builds included.
+window.__commits = 0
+window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+  supportsFiber: true, renderers: new Map(),
+  inject() { return 1 }, onCommitFiberRoot() { window.__commits++ }, onCommitFiberUnmount() {}, onPostCommitFiberRoot() {}, checkDCE() {},
+}
+</script>
+<style>body{margin:0;background:#fff}#box{width:1200px;margin:40px}#wave{width:100%;height:128px;position:relative}</style></head>
+<body><div id="box"><div id="wave"></div></div><script type="module" src="/src/runtime.ts"></script></body></html>

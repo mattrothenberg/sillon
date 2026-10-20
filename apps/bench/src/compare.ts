@@ -7,6 +7,9 @@
 //   ws-peaks         wavesurfer.js with server-precomputed peaks + duration (its long-file advice);
 //                    the peaks JSON fetch is timed, the server step is reported separately
 //   naive            fetch + AudioContext.decodeAudioData + per-pixel peaks on the main thread
+//   peaksjs          peaks.js 4.0.0 overview with precomputed data (`audiowaveform -b 8` layout,
+//                    256 samples per pixel), its advice for long files; the .dat fetch is timed
+//   peaksjs-webaudio peaks.js 4.0.0 overview with its Web Audio path: the whole file, decodeAudioData
 //
 // Times are milliseconds since navigation start, so each library's bundle load counts.
 // "Presented" = the second requestAnimationFrame after the draw, i.e. the frame with the
@@ -213,6 +216,26 @@ async function naive() {
   void ctx.close()
 }
 
-const run = { sillon: () => sillon(false), 'sillon-fallback': () => sillon(true), ws: () => ws(false), 'ws-peaks': () => ws(true), naive }[c]
+async function peaksjs(webAudio: boolean) {
+  const { default: Peaks } = await import('peaks.js')
+  const audio = document.createElement('audio')
+  audio.preload = 'metadata'
+  audio.src = url
+  document.body.append(audio)
+  const ctx = webAudio ? new AudioContext() : null
+  const opts: any = {
+    overview: { container: el, waveformColor: '#8a8a8a', playedWaveformColor: '#444' },
+    mediaElement: audio,
+    ...(webAudio ? { webAudio: { audioContext: ctx, multiChannel: false } } : { dataUri: { arraybuffer: `/peaks-dat/${file}.dat` } }),
+  }
+  await new Promise<void>((resolve, reject) => Peaks.init(opts, (err: Error | null) => (err ? reject(err) : resolve())))
+  R.complete = R.firstBars = await presented()
+  R.method = webAudio ? `webaudio@${ctx!.sampleRate}` : 'precomputed'
+  finishTiming()
+  await released
+  void ctx?.close()
+}
+
+const run = { sillon: () => sillon(false), 'sillon-fallback': () => sillon(true), ws: () => ws(false), 'ws-peaks': () => ws(true), naive, peaksjs: () => peaksjs(false), 'peaksjs-webaudio': () => peaksjs(true) }[c]
 if (!run) R.error = `unknown contender ${c}`
 else run().then(() => (R.done = true), (e) => { R.error = String(e?.message ?? e); R.done = true; if (!R.timing) { R.complete ??= null; finishTiming() } })

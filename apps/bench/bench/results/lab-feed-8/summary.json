@@ -1,0 +1,471 @@
+{
+  "date": "lab-feed-8",
+  "env": {
+    "date": "lab-feed-8",
+    "cpu": "Apple M4 Pro",
+    "cores": 14,
+    "memGB": 48,
+    "os": "macOS 26.6.2 (Darwin 25.6.0)",
+    "power": "AC Power",
+    "node": "v22.22.0",
+    "playwright": "1.64.1"
+  },
+  "power": "plugged in",
+  "conditions": "on AC Power, 1-min load average before each run 5.7 median / 5.9 max",
+  "generated": "2026-10-20T00:10:45.124Z",
+  "raw": "apps/bench/bench/results/lab-feed-8/raw.jsonl",
+  "notes": {
+    "contenders": {
+      "sillon": "@sillon/react parts over streamPeaks(): fetch-streamed MP3, WebCodecs decode in a worker, 256-sample max-abs peaks; plus a preload=metadata <audio> as usePlayer creates.",
+      "sillon-fallback": "sillon with its worker forced to report unsupported: whole-file fetch + OfflineAudioContext.decodeAudioData at 44.1 kHz, peaks on the main thread.",
+      "ws": "wavesurfer.js 8.0.2 defaults (url only): fetch + decodeAudioData into an 8 kHz AudioContext.",
+      "ws-peaks": "wavesurfer.js 8.0.2 with precomputed 8000-point peaks JSON + duration (its long-file advice); JSON fetch timed, server step in serverPeaksCost.",
+      "naive": "fetch + new AudioContext().decodeAudioData + per-pixel max on the main thread + canvas.",
+      "peaksjs": "peaks.js 4.0.0 overview with precomputed data in the layout `audiowaveform -b 8` writes (256 samples per pixel, channels averaged), made here from ffmpeg; the .dat fetch is timed, served uncompressed.",
+      "peaksjs-webaudio": "peaks.js 4.0.0 overview with its Web Audio path: XHR for the whole file, decodeAudioData, waveform data on the main thread."
+    },
+    "feed": "20 waveforms of 20 different 3-minute speech files (CBR 128 kbps) on one page, each with something that can play it. sillon: one useAudio() per item with library defaults (each waveform draws once its file is read; all 20 stream at once). wavesurfer.js: one WaveSurfer.create per item (defaults, or precomputed peaks). peaks.js: one overview per item (precomputed .dat, or Web Audio with one shared AudioContext). \"Complete\" is when the last of the 20 is on screen.",
+    "runtime": [
+      "Both libraries draw the same 1-hour file from the same precomputed data (ffmpeg, 256-sample max-abs), so nothing is decoded during the test. 1200 px wide, 2 px bars, 1 px gaps.",
+      "Each scenario runs 8 s: playback (the audio plays, muted; played part and cursor follow it), zoom (the view sweeps from the whole hour to 5 s at 30:00 and back, set every frame), resize (container width swings 600–1200 px every frame).",
+      "Main-thread time is Chromium's Performance.getMetrics TaskDuration (plus its script, layout and style parts), in ms per second of wall time, unthrottled only: under CDP CPU throttling those counters went down for light work (bench/metrics-check.mjs), so throttled runs report frame timing only.",
+      "CPU throttling (CDP Emulation.setCPUThrottlingRate) slows the page's main thread only. That is fine here, since neither library uses a worker after loading.",
+      "Slow frames: share of animation frames longer than 1.5× the median frame. Redraws: sillon, changes to its clip path; wavesurfer.js, its redrawcomplete events. Commits: React commits during the window, counted through the React DevTools hook.",
+      "wavesurfer.js waits for resizing to pause (100 ms) before redrawing, so during a continuous resize it does less work and shows its old drawing stretched; sillon redraws every frame."
+    ],
+    "memory": "Peak memory: most RSS of the browser's whole process tree while loading, minus the same tree idle on a blank page. Memory while open: the same, measured 3 s after loading finished plus 1 s after a forced garbage collection (Chromium only). RSS is what the OS has handed the browser; memory freed inside the browser is not always returned right away, so \"while open\" can include memory the page no longer uses.",
+    "method": [
+      "Fresh browser process per run, cold cache, seeded-random interleaved order, 1 s pause between runs.",
+      "Times are ms since navigation start (bundle load counts). Drawn = second rAF after the first draw with real data.",
+      "Network shaped at the server with one shared token bucket (DevTools emulation may skip worker fetches). JS/HTML/JSON gzipped.",
+      "Memory: RSS of the whole browser process tree sampled every 100 ms, minus the same tree idle on a blank page.",
+      "CPU: CPU seconds of that tree from navigation to complete, all threads. TBT: Chromium long tasks only.",
+      "Accuracy: vs ffmpeg decode (gapless-trimmed), ~20 000 bins aligned to 256-sample reference buckets.",
+      "sillon bundle includes React + ReactDOM (~65 kB gz), counted against it. JS transferred: every JavaScript response as served (gzipped), worker scripts included."
+    ],
+    "caveats": [
+      "One machine, headless browsers, on AC Power, 1-min load average before each run 5.7 median / 5.9 max; absolute numbers will differ elsewhere.",
+      "Speech corpus (TTS); wavesurfer decodes at 8 kHz by default, so its peak accuracy is lower by design and the difference is invisible at overview zoom.",
+      "sillon \"first bars\" is the start of a left-to-right stream, not the whole waveform; compare \"complete\" or \"half\" for the full shape.",
+      "Load suites are not CPU-throttled: Chromium's throttling does not reach workers (bench/throttle-check.mjs), so a throttled run would slow the others' decoding but not sillon's.",
+      "Music is one 2-minute file (m2m, 192 kbps); the rest of the corpus is speech."
+    ]
+  },
+  "serverPeaksCost": {
+    "d30s": {
+      "serverDecodeMs": 38,
+      "id": "d30s",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 30,
+      "bytes": 481114,
+      "bitrate": 128297
+    },
+    "d5m": {
+      "serverDecodeMs": 200,
+      "id": "d5m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 4801140,
+      "bitrate": 128030
+    },
+    "d1h": {
+      "serverDecodeMs": 2194,
+      "id": "d1h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 57601087,
+      "bitrate": 128002
+    },
+    "d3h": {
+      "serverDecodeMs": 6518,
+      "id": "d3h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 10800,
+      "bytes": 172801087,
+      "bitrate": 128000
+    },
+    "d5m-320": {
+      "serverDecodeMs": 235,
+      "id": "d5m-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 12002786,
+      "bitrate": 320074
+    },
+    "d5m-vbr": {
+      "serverDecodeMs": 185,
+      "id": "d5m-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 3917908,
+      "bitrate": 104477
+    },
+    "d5m-48m": {
+      "serverDecodeMs": 154,
+      "id": "d5m-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 300,
+      "bytes": 3600620,
+      "bitrate": 96016
+    },
+    "d1h-320": {
+      "serverDecodeMs": 2626,
+      "id": "d1h-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 144002655,
+      "bitrate": 320005
+    },
+    "d1h-vbr": {
+      "serverDecodeMs": 1986,
+      "id": "d1h-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 46490161,
+      "bitrate": 103311
+    },
+    "d1h-48m": {
+      "serverDecodeMs": 1641,
+      "id": "d1h-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 3600,
+      "bytes": 43200620,
+      "bitrate": 96001
+    },
+    "m2m": {
+      "serverDecodeMs": 97,
+      "id": "m2m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 122,
+      "bytes": 2929728,
+      "bitrate": 192113
+    },
+    "f00": {
+      "serverDecodeMs": 127,
+      "id": "f00",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f01": {
+      "serverDecodeMs": 128,
+      "id": "f01",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f02": {
+      "serverDecodeMs": 129,
+      "id": "f02",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f03": {
+      "serverDecodeMs": 129,
+      "id": "f03",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f04": {
+      "serverDecodeMs": 128,
+      "id": "f04",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f05": {
+      "serverDecodeMs": 129,
+      "id": "f05",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f06": {
+      "serverDecodeMs": 129,
+      "id": "f06",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f07": {
+      "serverDecodeMs": 127,
+      "id": "f07",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f08": {
+      "serverDecodeMs": 128,
+      "id": "f08",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f09": {
+      "serverDecodeMs": 134,
+      "id": "f09",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f10": {
+      "serverDecodeMs": 130,
+      "id": "f10",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f11": {
+      "serverDecodeMs": 129,
+      "id": "f11",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f12": {
+      "serverDecodeMs": 132,
+      "id": "f12",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f13": {
+      "serverDecodeMs": 129,
+      "id": "f13",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f14": {
+      "serverDecodeMs": 129,
+      "id": "f14",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f15": {
+      "serverDecodeMs": 129,
+      "id": "f15",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f16": {
+      "serverDecodeMs": 130,
+      "id": "f16",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f17": {
+      "serverDecodeMs": 127,
+      "id": "f17",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f18": {
+      "serverDecodeMs": 132,
+      "id": "f18",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f19": {
+      "serverDecodeMs": 129,
+      "id": "f19",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    }
+  },
+  "cells": [],
+  "feed": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "sillon",
+      "runs": 5,
+      "errors": 0,
+      "method": "useAudio",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 816.7000000476837,
+        "p25": 805.1000000238419,
+        "p75": 826.4000000953674,
+        "min": 794.2999999523163,
+        "max": 893.3000000715256,
+        "n": 5,
+        "values": [
+          893.3,
+          794.3,
+          816.7,
+          826.4,
+          805.1
+        ]
+      },
+      "half": {
+        "median": 816.7000000476837,
+        "p25": 805.1000000238419,
+        "p75": 826.4000000953674,
+        "min": 794.2999999523163,
+        "max": 893.3000000715256,
+        "n": 5
+      },
+      "drawn25": null,
+      "drawn75": null,
+      "peakMemoryMB": {
+        "median": 1486.875,
+        "p25": 1486.390625,
+        "p75": 1556.203125,
+        "min": 1276.84375,
+        "max": 1867.171875,
+        "n": 5,
+        "values": [
+          1486.88,
+          1867.17,
+          1486.39,
+          1276.84,
+          1556.2
+        ]
+      },
+      "retainedMB": {
+        "median": 754.09375,
+        "p25": 752.265625,
+        "p75": 758.421875,
+        "min": 748.953125,
+        "max": 758.4375,
+        "n": 5,
+        "values": [
+          758.42,
+          752.27,
+          758.44,
+          754.09,
+          748.95
+        ]
+      },
+      "jsKB": {
+        "median": 81.2021484375,
+        "p25": 81.2021484375,
+        "p75": 81.2021484375,
+        "min": 81.2021484375,
+        "max": 81.2021484375,
+        "n": 5
+      },
+      "cpuSec": {
+        "median": 3.57,
+        "p25": 3.55,
+        "p75": 3.6100000000000003,
+        "min": 3.54,
+        "max": 3.7199999999999998,
+        "n": 5
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 5,
+        "values": [
+          0,
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 255.39999997615814,
+        "p25": 247.39999997615814,
+        "p75": 255.80000007152557,
+        "min": 233,
+        "max": 260.39999997615814,
+        "n": 5
+      },
+      "inputP95": {
+        "median": 101.39999997615814,
+        "p25": 100.5,
+        "p75": 104.5,
+        "min": 90.89999997615814,
+        "max": 114.69999992847443,
+        "n": 5
+      },
+      "inputMax": {
+        "median": 101.39999997615814,
+        "p25": 100.5,
+        "p75": 104.5,
+        "min": 90.89999997615814,
+        "max": 114.69999992847443,
+        "n": 5
+      },
+      "jsHeapMB": {
+        "median": 553.8011236190796,
+        "p25": 553.7638082504272,
+        "p75": 553.8032827377319,
+        "min": 189.49007987976074,
+        "max": 614.111156463623,
+        "n": 5
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    }
+  ],
+  "runtime": []
+}

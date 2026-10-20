@@ -1,0 +1,7048 @@
+{
+  "date": "smoke-2026-10-19",
+  "env": {
+    "date": "smoke-2026-10-19",
+    "cpu": "Apple M4 Pro",
+    "cores": 14,
+    "memGB": 48,
+    "os": "macOS 26.6.2 (Darwin 25.6.0)",
+    "power": "Battery Power",
+    "node": "v22.22.0",
+    "playwright": "1.64.1"
+  },
+  "power": "partly on battery",
+  "conditions": "mixed power (23 runs on AC Power, 35 runs on Battery Power), 1-min load average before each run 6.1 median / 9.3 max",
+  "generated": "2026-10-19T22:41:50.980Z",
+  "raw": "apps/bench/bench/results/smoke-2026-10-19/raw.jsonl",
+  "notes": {
+    "contenders": {
+      "sillon": "@sillon/react parts over streamPeaks(): fetch-streamed MP3, WebCodecs decode in a worker, 256-sample max-abs peaks; plus a preload=metadata <audio> as usePlayer creates.",
+      "sillon-fallback": "sillon with its worker forced to report unsupported: whole-file fetch + OfflineAudioContext.decodeAudioData at 44.1 kHz, peaks on the main thread.",
+      "ws": "wavesurfer.js 8.0.2 defaults (url only): fetch + decodeAudioData into an 8 kHz AudioContext.",
+      "ws-peaks": "wavesurfer.js 8.0.2 with precomputed 8000-point peaks JSON + duration (its long-file advice); JSON fetch timed, server step in serverPeaksCost.",
+      "naive": "fetch + new AudioContext().decodeAudioData + per-pixel max on the main thread + canvas.",
+      "peaksjs": "peaks.js 4.0.0 overview with precomputed data in the layout `audiowaveform -b 8` writes (256 samples per pixel, channels averaged), made here from ffmpeg; the .dat fetch is timed, served uncompressed.",
+      "peaksjs-webaudio": "peaks.js 4.0.0 overview with its Web Audio path: XHR for the whole file, decodeAudioData, waveform data on the main thread."
+    },
+    "feed": "20 waveforms of 20 different 3-minute speech files (CBR 128 kbps) on one page, each with something that can play it. sillon: one useAudio() per item with library defaults (each waveform draws once its file is read; all 20 stream at once). wavesurfer.js: one WaveSurfer.create per item (defaults, or precomputed peaks). peaks.js: one overview per item (precomputed .dat, or Web Audio with one shared AudioContext). \"Complete\" is when the last of the 20 is on screen.",
+    "runtime": [
+      "Both libraries draw the same 1-hour file from the same precomputed data (ffmpeg, 256-sample max-abs), so nothing is decoded during the test. 1200 px wide, 2 px bars, 1 px gaps.",
+      "Each scenario runs 8 s: playback (the audio plays, muted; played part and cursor follow it), zoom (the view sweeps from the whole hour to 5 s at 30:00 and back, set every frame), resize (container width swings 600–1200 px every frame).",
+      "Main-thread time is Chromium's Performance.getMetrics TaskDuration (plus its script, layout and style parts), in ms per second of wall time, unthrottled only: under CDP CPU throttling those counters went down for light work (bench/metrics-check.mjs), so throttled runs report frame timing only.",
+      "CPU throttling (CDP Emulation.setCPUThrottlingRate) slows the page's main thread only. That is fine here, since neither library uses a worker after loading.",
+      "Slow frames: share of animation frames longer than 1.5× the median frame. Redraws: sillon, changes to its clip path; wavesurfer.js, its redrawcomplete events. Commits: React commits during the window, counted through the React DevTools hook.",
+      "wavesurfer.js waits for resizing to pause (100 ms) before redrawing, so during a continuous resize it does less work and shows its old drawing stretched; sillon redraws every frame."
+    ],
+    "memory": "Peak memory: most RSS of the browser's whole process tree while loading, minus the same tree idle on a blank page. Memory while open: the same, measured 3 s after loading finished plus 1 s after a forced garbage collection (Chromium only). RSS is what the OS has handed the browser; memory freed inside the browser is not always returned right away, so \"while open\" can include memory the page no longer uses.",
+    "method": [
+      "Fresh browser process per run, cold cache, seeded-random interleaved order, 1 s pause between runs.",
+      "Times are ms since navigation start (bundle load counts). Drawn = second rAF after the first draw with real data.",
+      "Network shaped at the server with one shared token bucket (DevTools emulation may skip worker fetches). JS/HTML/JSON gzipped.",
+      "Memory: RSS of the whole browser process tree sampled every 100 ms, minus the same tree idle on a blank page.",
+      "CPU: CPU seconds of that tree from navigation to complete, all threads. TBT: Chromium long tasks only.",
+      "Accuracy: vs ffmpeg decode (gapless-trimmed), ~20 000 bins aligned to 256-sample reference buckets.",
+      "sillon bundle includes React + ReactDOM (~65 kB gz), counted against it. JS transferred: every JavaScript response as served (gzipped), worker scripts included."
+    ],
+    "caveats": [
+      "One machine, headless browsers, mixed power (23 runs on AC Power, 35 runs on Battery Power), 1-min load average before each run 6.1 median / 9.3 max; absolute numbers will differ elsewhere.",
+      "Speech corpus (TTS); wavesurfer decodes at 8 kHz by default, so its peak accuracy is lower by design and the difference is invisible at overview zoom.",
+      "sillon \"first bars\" is the start of a left-to-right stream, not the whole waveform; compare \"complete\" or \"half\" for the full shape.",
+      "Load suites are not CPU-throttled: Chromium's throttling does not reach workers (bench/throttle-check.mjs), so a throttled run would slow the others' decoding but not sillon's.",
+      "Music is one 2-minute file (m2m, 192 kbps); the rest of the corpus is speech."
+    ]
+  },
+  "serverPeaksCost": {
+    "d30s": {
+      "serverDecodeMs": 38,
+      "id": "d30s",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 30,
+      "bytes": 481114,
+      "bitrate": 128297
+    },
+    "d5m": {
+      "serverDecodeMs": 200,
+      "id": "d5m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 4801140,
+      "bitrate": 128030
+    },
+    "d1h": {
+      "serverDecodeMs": 2194,
+      "id": "d1h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 57601087,
+      "bitrate": 128002
+    },
+    "d3h": {
+      "serverDecodeMs": 6518,
+      "id": "d3h",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 10800,
+      "bytes": 172801087,
+      "bitrate": 128000
+    },
+    "d5m-320": {
+      "serverDecodeMs": 235,
+      "id": "d5m-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 12002786,
+      "bitrate": 320074
+    },
+    "d5m-vbr": {
+      "serverDecodeMs": 185,
+      "id": "d5m-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 300,
+      "bytes": 3917908,
+      "bitrate": 104477
+    },
+    "d5m-48m": {
+      "serverDecodeMs": 154,
+      "id": "d5m-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 300,
+      "bytes": 3600620,
+      "bitrate": 96016
+    },
+    "d1h-320": {
+      "serverDecodeMs": 2626,
+      "id": "d1h-320",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 144002655,
+      "bitrate": 320005
+    },
+    "d1h-vbr": {
+      "serverDecodeMs": 1986,
+      "id": "d1h-vbr",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 3600,
+      "bytes": 46490161,
+      "bitrate": 103311
+    },
+    "d1h-48m": {
+      "serverDecodeMs": 1641,
+      "id": "d1h-48m",
+      "sampleRate": 48000,
+      "channels": 1,
+      "duration": 3600,
+      "bytes": 43200620,
+      "bitrate": 96001
+    },
+    "m2m": {
+      "serverDecodeMs": 97,
+      "id": "m2m",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 122,
+      "bytes": 2929728,
+      "bitrate": 192113
+    },
+    "f00": {
+      "serverDecodeMs": 127,
+      "id": "f00",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f01": {
+      "serverDecodeMs": 128,
+      "id": "f01",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f02": {
+      "serverDecodeMs": 129,
+      "id": "f02",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f03": {
+      "serverDecodeMs": 129,
+      "id": "f03",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f04": {
+      "serverDecodeMs": 128,
+      "id": "f04",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f05": {
+      "serverDecodeMs": 129,
+      "id": "f05",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f06": {
+      "serverDecodeMs": 129,
+      "id": "f06",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f07": {
+      "serverDecodeMs": 127,
+      "id": "f07",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f08": {
+      "serverDecodeMs": 128,
+      "id": "f08",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f09": {
+      "serverDecodeMs": 134,
+      "id": "f09",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f10": {
+      "serverDecodeMs": 130,
+      "id": "f10",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f11": {
+      "serverDecodeMs": 129,
+      "id": "f11",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f12": {
+      "serverDecodeMs": 132,
+      "id": "f12",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f13": {
+      "serverDecodeMs": 129,
+      "id": "f13",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f14": {
+      "serverDecodeMs": 129,
+      "id": "f14",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f15": {
+      "serverDecodeMs": 129,
+      "id": "f15",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f16": {
+      "serverDecodeMs": 130,
+      "id": "f16",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f17": {
+      "serverDecodeMs": 127,
+      "id": "f17",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f18": {
+      "serverDecodeMs": 132,
+      "id": "f18",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    },
+    "f19": {
+      "serverDecodeMs": 129,
+      "id": "f19",
+      "sampleRate": 44100,
+      "channels": 2,
+      "duration": 180,
+      "bytes": 2881035,
+      "bitrate": 128046
+    }
+  },
+  "cells": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "webcodecs",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 95.30000007152557,
+        "p25": 95.30000007152557,
+        "p75": 95.30000007152557,
+        "min": 95.30000007152557,
+        "max": 95.30000007152557,
+        "n": 1,
+        "values": [
+          95.3
+        ]
+      },
+      "complete": {
+        "median": 95.30000007152557,
+        "p25": 95.30000007152557,
+        "p75": 95.30000007152557,
+        "min": 95.30000007152557,
+        "max": 95.30000007152557,
+        "n": 1,
+        "values": [
+          95.3
+        ]
+      },
+      "half": {
+        "median": 62.800000071525574,
+        "p25": 62.800000071525574,
+        "p75": 62.800000071525574,
+        "min": 62.800000071525574,
+        "max": 62.800000071525574,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 51.6875,
+        "p25": 51.6875,
+        "p75": 51.6875,
+        "min": 51.6875,
+        "max": 51.6875,
+        "n": 1,
+        "values": [
+          51.69
+        ]
+      },
+      "retainedMB": {
+        "median": 58.171875,
+        "p25": 58.171875,
+        "p75": 58.171875,
+        "min": 58.171875,
+        "max": 58.171875,
+        "n": 1,
+        "values": [
+          58.17
+        ]
+      },
+      "jsKB": {
+        "median": 84,
+        "p25": 84,
+        "p75": 84,
+        "min": 84,
+        "max": 84,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.15000000000000002,
+        "p25": 0.15000000000000002,
+        "p75": 0.15000000000000002,
+        "min": 0.15000000000000002,
+        "max": 0.15000000000000002,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 1.899999976158142,
+        "p25": 1.899999976158142,
+        "p75": 1.899999976158142,
+        "min": 1.899999976158142,
+        "max": 1.899999976158142,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.657931327819824,
+        "p25": 3.657931327819824,
+        "p75": 3.657931327819824,
+        "min": 3.657931327819824,
+        "max": 3.657931327819824,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999999549,
+        "p25": 0.9999999999999549,
+        "p75": 0.9999999999999549,
+        "min": 0.9999999999999549,
+        "max": 0.9999999999999549,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 4.470348358154297e-7,
+        "p25": 4.470348358154297e-7,
+        "p75": 4.470348358154297e-7,
+        "min": 4.470348358154297e-7,
+        "max": 4.470348358154297e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "sillon-fallback",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 65.89999997615814,
+        "p25": 65.89999997615814,
+        "p75": 65.89999997615814,
+        "min": 65.89999997615814,
+        "max": 65.89999997615814,
+        "n": 1,
+        "values": [
+          65.9
+        ]
+      },
+      "complete": {
+        "median": 65.89999997615814,
+        "p25": 65.89999997615814,
+        "p75": 65.89999997615814,
+        "min": 65.89999997615814,
+        "max": 65.89999997615814,
+        "n": 1,
+        "values": [
+          65.9
+        ]
+      },
+      "half": {
+        "median": 65.89999997615814,
+        "p25": 65.89999997615814,
+        "p75": 65.89999997615814,
+        "min": 65.89999997615814,
+        "max": 65.89999997615814,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 66.765625,
+        "p25": 66.765625,
+        "p75": 66.765625,
+        "min": 66.765625,
+        "max": 66.765625,
+        "n": 1,
+        "values": [
+          66.77
+        ]
+      },
+      "retainedMB": {
+        "median": 63.90625,
+        "p25": 63.90625,
+        "p75": 63.90625,
+        "min": 63.90625,
+        "max": 63.90625,
+        "n": 1,
+        "values": [
+          63.91
+        ]
+      },
+      "jsKB": {
+        "median": 82.1689453125,
+        "p25": 82.1689453125,
+        "p75": 82.1689453125,
+        "min": 82.1689453125,
+        "max": 82.1689453125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.14,
+        "p25": 0.14,
+        "p75": 0.14,
+        "min": 0.14,
+        "max": 0.14,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 6.199999928474426,
+        "p25": 6.199999928474426,
+        "p75": 6.199999928474426,
+        "min": 6.199999928474426,
+        "max": 6.199999928474426,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.399909019470215,
+        "p25": 3.399909019470215,
+        "p75": 3.399909019470215,
+        "min": 3.399909019470215,
+        "max": 3.399909019470215,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999999549,
+        "p25": 0.9999999999999549,
+        "p75": 0.9999999999999549,
+        "min": 0.9999999999999549,
+        "max": 0.9999999999999549,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 4.470348358154297e-7,
+        "p25": 4.470348358154297e-7,
+        "p75": 4.470348358154297e-7,
+        "min": 4.470348358154297e-7,
+        "max": 4.470348358154297e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 162.79999995231628,
+        "p25": 162.79999995231628,
+        "p75": 162.79999995231628,
+        "min": 162.79999995231628,
+        "max": 162.79999995231628,
+        "n": 1,
+        "values": [
+          162.8
+        ]
+      },
+      "complete": {
+        "median": 162.79999995231628,
+        "p25": 162.79999995231628,
+        "p75": 162.79999995231628,
+        "min": 162.79999995231628,
+        "max": 162.79999995231628,
+        "n": 1,
+        "values": [
+          162.8
+        ]
+      },
+      "half": {
+        "median": 162.79999995231628,
+        "p25": 162.79999995231628,
+        "p75": 162.79999995231628,
+        "min": 162.79999995231628,
+        "max": 162.79999995231628,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 120.390625,
+        "p25": 120.390625,
+        "p75": 120.390625,
+        "min": 120.390625,
+        "max": 120.390625,
+        "n": 1,
+        "values": [
+          120.39
+        ]
+      },
+      "retainedMB": {
+        "median": 162.484375,
+        "p25": 162.484375,
+        "p75": 162.484375,
+        "min": 162.484375,
+        "max": 162.484375,
+        "n": 1,
+        "values": [
+          162.48
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.18000000000000005,
+        "p25": 0.18000000000000005,
+        "p75": 0.18000000000000005,
+        "min": 0.18000000000000005,
+        "max": 0.18000000000000005,
+        "n": 1
+      },
+      "tbt": {
+        "median": 44,
+        "p25": 44,
+        "p75": 44,
+        "min": 44,
+        "max": 44,
+        "n": 1,
+        "values": [
+          44
+        ]
+      },
+      "maxLag": {
+        "median": 93.20000004768372,
+        "p25": 93.20000004768372,
+        "p75": 93.20000004768372,
+        "min": 93.20000004768372,
+        "max": 93.20000004768372,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 2.9355573654174805,
+        "p25": 2.9355573654174805,
+        "p75": 2.9355573654174805,
+        "min": 2.9355573654174805,
+        "max": 2.9355573654174805,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9787340215508501,
+        "p25": 0.9787340215508501,
+        "p75": 0.9787340215508501,
+        "min": 0.9787340215508501,
+        "max": 0.9787340215508501,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.23817451298236847,
+        "p25": 0.23817451298236847,
+        "p75": 0.23817451298236847,
+        "min": 0.23817451298236847,
+        "max": 0.23817451298236847,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 35.700000047683716,
+        "p25": 35.700000047683716,
+        "p75": 35.700000047683716,
+        "min": 35.700000047683716,
+        "max": 35.700000047683716,
+        "n": 1,
+        "values": [
+          35.7
+        ]
+      },
+      "complete": {
+        "median": 35.700000047683716,
+        "p25": 35.700000047683716,
+        "p75": 35.700000047683716,
+        "min": 35.700000047683716,
+        "max": 35.700000047683716,
+        "n": 1,
+        "values": [
+          35.7
+        ]
+      },
+      "half": {
+        "median": 35.700000047683716,
+        "p25": 35.700000047683716,
+        "p75": 35.700000047683716,
+        "min": 35.700000047683716,
+        "max": 35.700000047683716,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 34.734375,
+        "p25": 34.734375,
+        "p75": 34.734375,
+        "min": 34.734375,
+        "max": 34.734375,
+        "n": 1,
+        "values": [
+          34.73
+        ]
+      },
+      "retainedMB": {
+        "median": 42.03125,
+        "p25": 42.03125,
+        "p75": 42.03125,
+        "min": 42.03125,
+        "max": 42.03125,
+        "n": 1,
+        "values": [
+          42.03
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.06999999999999995,
+        "p25": 0.06999999999999995,
+        "p75": 0.06999999999999995,
+        "min": 0.06999999999999995,
+        "max": 0.06999999999999995,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 0.09999990463256836,
+        "p25": 0.09999990463256836,
+        "p75": 0.09999990463256836,
+        "min": 0.09999990463256836,
+        "max": 0.09999990463256836,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 2.7658586502075195,
+        "p25": 2.7658586502075195,
+        "p75": 2.7658586502075195,
+        "min": 2.7658586502075195,
+        "max": 2.7658586502075195,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 56.10000002384186,
+        "p25": 56.10000002384186,
+        "p75": 56.10000002384186,
+        "min": 56.10000002384186,
+        "max": 56.10000002384186,
+        "n": 1,
+        "values": [
+          56.1
+        ]
+      },
+      "complete": {
+        "median": 56.10000002384186,
+        "p25": 56.10000002384186,
+        "p75": 56.10000002384186,
+        "min": 56.10000002384186,
+        "max": 56.10000002384186,
+        "n": 1,
+        "values": [
+          56.1
+        ]
+      },
+      "half": {
+        "median": 56.10000002384186,
+        "p25": 56.10000002384186,
+        "p75": 56.10000002384186,
+        "min": 56.10000002384186,
+        "max": 56.10000002384186,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 52.125,
+        "p25": 52.125,
+        "p75": 52.125,
+        "min": 52.125,
+        "max": 52.125,
+        "n": 1,
+        "values": [
+          52.13
+        ]
+      },
+      "retainedMB": {
+        "median": 58.859375,
+        "p25": 58.859375,
+        "p75": 58.859375,
+        "min": 58.859375,
+        "max": 58.859375,
+        "n": 1,
+        "values": [
+          58.86
+        ]
+      },
+      "jsKB": {
+        "median": 63.61328125,
+        "p25": 63.61328125,
+        "p75": 63.61328125,
+        "min": 63.61328125,
+        "max": 63.61328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.07999999999999996,
+        "p25": 0.07999999999999996,
+        "p75": 0.07999999999999996,
+        "min": 0.07999999999999996,
+        "max": 0.07999999999999996,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 13.099999904632568,
+        "p25": 13.099999904632568,
+        "p75": 13.099999904632568,
+        "min": 13.099999904632568,
+        "max": 13.099999904632568,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.9909543991088867,
+        "p25": 3.9909543991088867,
+        "p75": 3.9909543991088867,
+        "min": 3.9909543991088867,
+        "max": 3.9909543991088867,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 207.30000007152557,
+        "p25": 207.30000007152557,
+        "p75": 207.30000007152557,
+        "min": 207.30000007152557,
+        "max": 207.30000007152557,
+        "n": 1,
+        "values": [
+          207.3
+        ]
+      },
+      "complete": {
+        "median": 207.30000007152557,
+        "p25": 207.30000007152557,
+        "p75": 207.30000007152557,
+        "min": 207.30000007152557,
+        "max": 207.30000007152557,
+        "n": 1,
+        "values": [
+          207.3
+        ]
+      },
+      "half": {
+        "median": 207.30000007152557,
+        "p25": 207.30000007152557,
+        "p75": 207.30000007152557,
+        "min": 207.30000007152557,
+        "max": 207.30000007152557,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 161.625,
+        "p25": 161.625,
+        "p75": 161.625,
+        "min": 161.625,
+        "max": 161.625,
+        "n": 1,
+        "values": [
+          161.63
+        ]
+      },
+      "retainedMB": {
+        "median": 170.421875,
+        "p25": 170.421875,
+        "p75": 170.421875,
+        "min": 170.421875,
+        "max": 170.421875,
+        "n": 1,
+        "values": [
+          170.42
+        ]
+      },
+      "jsKB": {
+        "median": 68.2841796875,
+        "p25": 68.2841796875,
+        "p75": 68.2841796875,
+        "min": 68.2841796875,
+        "max": 68.2841796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.2300000000000001,
+        "p25": 0.2300000000000001,
+        "p75": 0.2300000000000001,
+        "min": 0.2300000000000001,
+        "max": 0.2300000000000001,
+        "n": 1
+      },
+      "tbt": {
+        "median": 50,
+        "p25": 50,
+        "p75": 50,
+        "min": 50,
+        "max": 50,
+        "n": 1,
+        "values": [
+          50
+        ]
+      },
+      "maxLag": {
+        "median": 90,
+        "p25": 90,
+        "p75": 90,
+        "min": 90,
+        "max": 90,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.20000004768371582,
+        "p25": 0.20000004768371582,
+        "p75": 0.20000004768371582,
+        "min": 0.20000004768371582,
+        "max": 0.20000004768371582,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 0.20000004768371582,
+        "p25": 0.20000004768371582,
+        "p75": 0.20000004768371582,
+        "min": 0.20000004768371582,
+        "max": 0.20000004768371582,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 4.155730247497559,
+        "p25": 4.155730247497559,
+        "p75": 4.155730247497559,
+        "min": 4.155730247497559,
+        "max": 4.155730247497559,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d30s",
+      "contender": "naive",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 170.29999995231628,
+        "p25": 170.29999995231628,
+        "p75": 170.29999995231628,
+        "min": 170.29999995231628,
+        "max": 170.29999995231628,
+        "n": 1,
+        "values": [
+          170.3
+        ]
+      },
+      "complete": {
+        "median": 170.29999995231628,
+        "p25": 170.29999995231628,
+        "p75": 170.29999995231628,
+        "min": 170.29999995231628,
+        "max": 170.29999995231628,
+        "n": 1,
+        "values": [
+          170.3
+        ]
+      },
+      "half": {
+        "median": 170.29999995231628,
+        "p25": 170.29999995231628,
+        "p75": 170.29999995231628,
+        "min": 170.29999995231628,
+        "max": 170.29999995231628,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 147.859375,
+        "p25": 147.859375,
+        "p75": 147.859375,
+        "min": 147.859375,
+        "max": 147.859375,
+        "n": 1,
+        "values": [
+          147.86
+        ]
+      },
+      "retainedMB": {
+        "median": 150.53125,
+        "p25": 150.53125,
+        "p75": 150.53125,
+        "min": 150.53125,
+        "max": 150.53125,
+        "n": 1,
+        "values": [
+          150.53
+        ]
+      },
+      "jsKB": {
+        "median": 4.36328125,
+        "p25": 4.36328125,
+        "p75": 4.36328125,
+        "min": 4.36328125,
+        "max": 4.36328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.15000000000000002,
+        "p25": 0.15000000000000002,
+        "p75": 0.15000000000000002,
+        "min": 0.15000000000000002,
+        "max": 0.15000000000000002,
+        "n": 1
+      },
+      "tbt": {
+        "median": 46,
+        "p25": 46,
+        "p75": 46,
+        "min": 46,
+        "max": 46,
+        "n": 1,
+        "values": [
+          46
+        ]
+      },
+      "maxLag": {
+        "median": 88,
+        "p25": 88,
+        "p75": 88,
+        "min": 88,
+        "max": 88,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.2999999523162842,
+        "p25": 0.2999999523162842,
+        "p75": 0.2999999523162842,
+        "min": 0.2999999523162842,
+        "max": 0.2999999523162842,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 0.2999999523162842,
+        "p25": 0.2999999523162842,
+        "p75": 0.2999999523162842,
+        "min": 0.2999999523162842,
+        "max": 0.2999999523162842,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 2.1239309310913086,
+        "p25": 2.1239309310913086,
+        "p75": 2.1239309310913086,
+        "min": 2.1239309310913086,
+        "max": 2.1239309310913086,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9976277962277988,
+        "p25": 0.9976277962277988,
+        "p75": 0.9976277962277988,
+        "min": 0.9976277962277988,
+        "max": 0.9976277962277988,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.23259431309998035,
+        "p25": 0.23259431309998035,
+        "p75": 0.23259431309998035,
+        "min": 0.23259431309998035,
+        "max": 0.23259431309998035,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "webcodecs",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 126.59999990463257,
+        "p25": 126.59999990463257,
+        "p75": 126.59999990463257,
+        "min": 126.59999990463257,
+        "max": 126.59999990463257,
+        "n": 1,
+        "values": [
+          126.6
+        ]
+      },
+      "complete": {
+        "median": 393.6999999284744,
+        "p25": 393.6999999284744,
+        "p75": 393.6999999284744,
+        "min": 393.6999999284744,
+        "max": 393.6999999284744,
+        "n": 1,
+        "values": [
+          393.7
+        ]
+      },
+      "half": {
+        "median": 229.09999990463257,
+        "p25": 229.09999990463257,
+        "p75": 229.09999990463257,
+        "min": 229.09999990463257,
+        "max": 229.09999990463257,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 88.53125,
+        "p25": 88.53125,
+        "p75": 88.53125,
+        "min": 88.53125,
+        "max": 88.53125,
+        "n": 1,
+        "values": [
+          88.53
+        ]
+      },
+      "retainedMB": {
+        "median": 77.03125,
+        "p25": 77.03125,
+        "p75": 77.03125,
+        "min": 77.03125,
+        "max": 77.03125,
+        "n": 1,
+        "values": [
+          77.03
+        ]
+      },
+      "jsKB": {
+        "median": 84,
+        "p25": 84,
+        "p75": 84,
+        "min": 84,
+        "max": 84,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.5200000000000001,
+        "p25": 0.5200000000000001,
+        "p75": 0.5200000000000001,
+        "min": 0.5200000000000001,
+        "max": 0.5200000000000001,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 5.200000047683716,
+        "p25": 5.200000047683716,
+        "p75": 5.200000047683716,
+        "min": 5.200000047683716,
+        "max": 5.200000047683716,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 10.899999976158142,
+        "p25": 10.899999976158142,
+        "p75": 10.899999976158142,
+        "min": 10.899999976158142,
+        "max": 10.899999976158142,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 10.899999976158142,
+        "p25": 10.899999976158142,
+        "p75": 10.899999976158142,
+        "min": 10.899999976158142,
+        "max": 10.899999976158142,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 4.965478897094727,
+        "p25": 4.965478897094727,
+        "p75": 4.965478897094727,
+        "min": 4.965478897094727,
+        "max": 4.965478897094727,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.999999999999957,
+        "p25": 0.999999999999957,
+        "p75": 0.999999999999957,
+        "min": 0.999999999999957,
+        "max": 0.999999999999957,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 5.960464477539062e-7,
+        "p25": 5.960464477539062e-7,
+        "p75": 5.960464477539062e-7,
+        "min": 5.960464477539062e-7,
+        "max": 5.960464477539062e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "sillon-fallback",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 289.1999999284744,
+        "p25": 289.1999999284744,
+        "p75": 289.1999999284744,
+        "min": 289.1999999284744,
+        "max": 289.1999999284744,
+        "n": 1,
+        "values": [
+          289.2
+        ]
+      },
+      "complete": {
+        "median": 289.1999999284744,
+        "p25": 289.1999999284744,
+        "p75": 289.1999999284744,
+        "min": 289.1999999284744,
+        "max": 289.1999999284744,
+        "n": 1,
+        "values": [
+          289.2
+        ]
+      },
+      "half": {
+        "median": 289.1999999284744,
+        "p25": 289.1999999284744,
+        "p75": 289.1999999284744,
+        "min": 289.1999999284744,
+        "max": 289.1999999284744,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 319.03125,
+        "p25": 319.03125,
+        "p75": 319.03125,
+        "min": 319.03125,
+        "max": 319.03125,
+        "n": 1,
+        "values": [
+          319.03
+        ]
+      },
+      "retainedMB": {
+        "median": 183.109375,
+        "p25": 183.109375,
+        "p75": 183.109375,
+        "min": 183.109375,
+        "max": 183.109375,
+        "n": 1,
+        "values": [
+          183.11
+        ]
+      },
+      "jsKB": {
+        "median": 82.1689453125,
+        "p25": 82.1689453125,
+        "p75": 82.1689453125,
+        "min": 82.1689453125,
+        "max": 82.1689453125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.38,
+        "p25": 0.38,
+        "p75": 0.38,
+        "min": 0.38,
+        "max": 0.38,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 42.90000009536743,
+        "p25": 42.90000009536743,
+        "p75": 42.90000009536743,
+        "min": 42.90000009536743,
+        "max": 42.90000009536743,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 5.599999904632568,
+        "p25": 5.599999904632568,
+        "p75": 5.599999904632568,
+        "min": 5.599999904632568,
+        "max": 5.599999904632568,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 5.599999904632568,
+        "p25": 5.599999904632568,
+        "p75": 5.599999904632568,
+        "min": 5.599999904632568,
+        "max": 5.599999904632568,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 104.32602882385254,
+        "p25": 104.32602882385254,
+        "p75": 104.32602882385254,
+        "min": 104.32602882385254,
+        "max": 104.32602882385254,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.999999999999957,
+        "p25": 0.999999999999957,
+        "p75": 0.999999999999957,
+        "min": 0.999999999999957,
+        "max": 0.999999999999957,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 5.960464477539062e-7,
+        "p25": 5.960464477539062e-7,
+        "p75": 5.960464477539062e-7,
+        "min": 5.960464477539062e-7,
+        "max": 5.960464477539062e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 368.5,
+        "p25": 368.5,
+        "p75": 368.5,
+        "min": 368.5,
+        "max": 368.5,
+        "n": 1,
+        "values": [
+          368.5
+        ]
+      },
+      "complete": {
+        "median": 368.5,
+        "p25": 368.5,
+        "p75": 368.5,
+        "min": 368.5,
+        "max": 368.5,
+        "n": 1,
+        "values": [
+          368.5
+        ]
+      },
+      "half": {
+        "median": 368.5,
+        "p25": 368.5,
+        "p75": 368.5,
+        "min": 368.5,
+        "max": 368.5,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 328.203125,
+        "p25": 328.203125,
+        "p75": 328.203125,
+        "min": 328.203125,
+        "max": 328.203125,
+        "n": 1,
+        "values": [
+          328.2
+        ]
+      },
+      "retainedMB": {
+        "median": 311.046875,
+        "p25": 311.046875,
+        "p75": 311.046875,
+        "min": 311.046875,
+        "max": 311.046875,
+        "n": 1,
+        "values": [
+          311.05
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.42000000000000004,
+        "p25": 0.42000000000000004,
+        "p75": 0.42000000000000004,
+        "min": 0.42000000000000004,
+        "max": 0.42000000000000004,
+        "n": 1
+      },
+      "tbt": {
+        "median": 41,
+        "p25": 41,
+        "p75": 41,
+        "min": 41,
+        "max": 41,
+        "n": 1,
+        "values": [
+          41
+        ]
+      },
+      "maxLag": {
+        "median": 73.10000002384186,
+        "p25": 73.10000002384186,
+        "p75": 73.10000002384186,
+        "min": 73.10000002384186,
+        "max": 73.10000002384186,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 44.364370346069336,
+        "p25": 44.364370346069336,
+        "p75": 44.364370346069336,
+        "min": 44.364370346069336,
+        "max": 44.364370346069336,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9761756197519048,
+        "p25": 0.9761756197519048,
+        "p75": 0.9761756197519048,
+        "min": 0.9761756197519048,
+        "max": 0.9761756197519048,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.3777254968881607,
+        "p25": 0.3777254968881607,
+        "p75": 0.3777254968881607,
+        "min": 0.3777254968881607,
+        "max": 0.3777254968881607,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 52.700000047683716,
+        "p25": 52.700000047683716,
+        "p75": 52.700000047683716,
+        "min": 52.700000047683716,
+        "max": 52.700000047683716,
+        "n": 1,
+        "values": [
+          52.7
+        ]
+      },
+      "complete": {
+        "median": 52.700000047683716,
+        "p25": 52.700000047683716,
+        "p75": 52.700000047683716,
+        "min": 52.700000047683716,
+        "max": 52.700000047683716,
+        "n": 1,
+        "values": [
+          52.7
+        ]
+      },
+      "half": {
+        "median": 52.700000047683716,
+        "p25": 52.700000047683716,
+        "p75": 52.700000047683716,
+        "min": 52.700000047683716,
+        "max": 52.700000047683716,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 35.109375,
+        "p25": 35.109375,
+        "p75": 35.109375,
+        "min": 35.109375,
+        "max": 35.109375,
+        "n": 1,
+        "values": [
+          35.11
+        ]
+      },
+      "retainedMB": {
+        "median": 43.171875,
+        "p25": 43.171875,
+        "p75": 43.171875,
+        "min": 43.171875,
+        "max": 43.171875,
+        "n": 1,
+        "values": [
+          43.17
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.07999999999999996,
+        "p25": 0.07999999999999996,
+        "p75": 0.07999999999999996,
+        "min": 0.07999999999999996,
+        "max": 0.07999999999999996,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 2.100000023841858,
+        "p25": 2.100000023841858,
+        "p75": 2.100000023841858,
+        "min": 2.100000023841858,
+        "max": 2.100000023841858,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 2.8029165267944336,
+        "p25": 2.8029165267944336,
+        "p75": 2.8029165267944336,
+        "min": 2.8029165267944336,
+        "max": 2.8029165267944336,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 46.60000002384186,
+        "p25": 46.60000002384186,
+        "p75": 46.60000002384186,
+        "min": 46.60000002384186,
+        "max": 46.60000002384186,
+        "n": 1,
+        "values": [
+          46.6
+        ]
+      },
+      "complete": {
+        "median": 46.60000002384186,
+        "p25": 46.60000002384186,
+        "p75": 46.60000002384186,
+        "min": 46.60000002384186,
+        "max": 46.60000002384186,
+        "n": 1,
+        "values": [
+          46.6
+        ]
+      },
+      "half": {
+        "median": 46.60000002384186,
+        "p25": 46.60000002384186,
+        "p75": 46.60000002384186,
+        "min": 46.60000002384186,
+        "max": 46.60000002384186,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 53.28125,
+        "p25": 53.28125,
+        "p75": 53.28125,
+        "min": 53.28125,
+        "max": 53.28125,
+        "n": 1,
+        "values": [
+          53.28
+        ]
+      },
+      "retainedMB": {
+        "median": 60.390625,
+        "p25": 60.390625,
+        "p75": 60.390625,
+        "min": 60.390625,
+        "max": 60.390625,
+        "n": 1,
+        "values": [
+          60.39
+        ]
+      },
+      "jsKB": {
+        "median": 63.61328125,
+        "p25": 63.61328125,
+        "p75": 63.61328125,
+        "min": 63.61328125,
+        "max": 63.61328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.10999999999999999,
+        "p25": 0.10999999999999999,
+        "p75": 0.10999999999999999,
+        "min": 0.10999999999999999,
+        "max": 0.10999999999999999,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 13.900000095367432,
+        "p25": 13.900000095367432,
+        "p75": 13.900000095367432,
+        "min": 13.900000095367432,
+        "max": 13.900000095367432,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 4.175387382507324,
+        "p25": 4.175387382507324,
+        "p75": 4.175387382507324,
+        "min": 4.175387382507324,
+        "max": 4.175387382507324,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 613.1000000238419,
+        "p25": 613.1000000238419,
+        "p75": 613.1000000238419,
+        "min": 613.1000000238419,
+        "max": 613.1000000238419,
+        "n": 1,
+        "values": [
+          613.1
+        ]
+      },
+      "complete": {
+        "median": 613.1000000238419,
+        "p25": 613.1000000238419,
+        "p75": 613.1000000238419,
+        "min": 613.1000000238419,
+        "max": 613.1000000238419,
+        "n": 1,
+        "values": [
+          613.1
+        ]
+      },
+      "half": {
+        "median": 613.1000000238419,
+        "p25": 613.1000000238419,
+        "p75": 613.1000000238419,
+        "min": 613.1000000238419,
+        "max": 613.1000000238419,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 405.96875,
+        "p25": 405.96875,
+        "p75": 405.96875,
+        "min": 405.96875,
+        "max": 405.96875,
+        "n": 1,
+        "values": [
+          405.97
+        ]
+      },
+      "retainedMB": {
+        "median": 289.6875,
+        "p25": 289.6875,
+        "p75": 289.6875,
+        "min": 289.6875,
+        "max": 289.6875,
+        "n": 1,
+        "values": [
+          289.69
+        ]
+      },
+      "jsKB": {
+        "median": 68.2841796875,
+        "p25": 68.2841796875,
+        "p75": 68.2841796875,
+        "min": 68.2841796875,
+        "max": 68.2841796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.68,
+        "p25": 0.68,
+        "p75": 0.68,
+        "min": 0.68,
+        "max": 0.68,
+        "n": 1
+      },
+      "tbt": {
+        "median": 48,
+        "p25": 48,
+        "p75": 48,
+        "min": 48,
+        "max": 48,
+        "n": 1,
+        "values": [
+          48
+        ]
+      },
+      "maxLag": {
+        "median": 91,
+        "p25": 91,
+        "p75": 91,
+        "min": 91,
+        "max": 91,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 12.900000095367432,
+        "p25": 12.900000095367432,
+        "p75": 12.900000095367432,
+        "min": 12.900000095367432,
+        "max": 12.900000095367432,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 12.900000095367432,
+        "p25": 12.900000095367432,
+        "p75": 12.900000095367432,
+        "min": 12.900000095367432,
+        "max": 12.900000095367432,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3.5297279357910156,
+        "p25": 3.5297279357910156,
+        "p75": 3.5297279357910156,
+        "min": 3.5297279357910156,
+        "max": 3.5297279357910156,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d5m",
+      "contender": "naive",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 543.3999999761581,
+        "p25": 543.3999999761581,
+        "p75": 543.3999999761581,
+        "min": 543.3999999761581,
+        "max": 543.3999999761581,
+        "n": 1,
+        "values": [
+          543.4
+        ]
+      },
+      "complete": {
+        "median": 543.3999999761581,
+        "p25": 543.3999999761581,
+        "p75": 543.3999999761581,
+        "min": 543.3999999761581,
+        "max": 543.3999999761581,
+        "n": 1,
+        "values": [
+          543.4
+        ]
+      },
+      "half": {
+        "median": 543.3999999761581,
+        "p25": 543.3999999761581,
+        "p75": 543.3999999761581,
+        "min": 543.3999999761581,
+        "max": 543.3999999761581,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 399.15625,
+        "p25": 399.15625,
+        "p75": 399.15625,
+        "min": 399.15625,
+        "max": 399.15625,
+        "n": 1,
+        "values": [
+          399.16
+        ]
+      },
+      "retainedMB": {
+        "median": 369.109375,
+        "p25": 369.109375,
+        "p75": 369.109375,
+        "min": 369.109375,
+        "max": 369.109375,
+        "n": 1,
+        "values": [
+          369.11
+        ]
+      },
+      "jsKB": {
+        "median": 4.36328125,
+        "p25": 4.36328125,
+        "p75": 4.36328125,
+        "min": 4.36328125,
+        "max": 4.36328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.5700000000000002,
+        "p25": 0.5700000000000002,
+        "p75": 0.5700000000000002,
+        "min": 0.5700000000000002,
+        "max": 0.5700000000000002,
+        "n": 1
+      },
+      "tbt": {
+        "median": 47,
+        "p25": 47,
+        "p75": 47,
+        "min": 47,
+        "max": 47,
+        "n": 1,
+        "values": [
+          47
+        ]
+      },
+      "maxLag": {
+        "median": 84.10000002384186,
+        "p25": 84.10000002384186,
+        "p75": 84.10000002384186,
+        "min": 84.10000002384186,
+        "max": 84.10000002384186,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 16.5,
+        "p25": 16.5,
+        "p75": 16.5,
+        "min": 16.5,
+        "max": 16.5,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 16.5,
+        "p25": 16.5,
+        "p75": 16.5,
+        "min": 16.5,
+        "max": 16.5,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 112.02826595306396,
+        "p25": 112.02826595306396,
+        "p75": 112.02826595306396,
+        "min": 112.02826595306396,
+        "max": 112.02826595306396,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9971164715813372,
+        "p25": 0.9971164715813372,
+        "p75": 0.9971164715813372,
+        "min": 0.9971164715813372,
+        "max": 0.9971164715813372,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.37197381258010864,
+        "p25": 0.37197381258010864,
+        "p75": 0.37197381258010864,
+        "min": 0.37197381258010864,
+        "max": 0.37197381258010864,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "webcodecs",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 117.80000007152557,
+        "p25": 117.80000007152557,
+        "p75": 117.80000007152557,
+        "min": 117.80000007152557,
+        "max": 117.80000007152557,
+        "n": 1,
+        "values": [
+          117.8
+        ]
+      },
+      "complete": {
+        "median": 4183.300000071526,
+        "p25": 4183.300000071526,
+        "p75": 4183.300000071526,
+        "min": 4183.300000071526,
+        "max": 4183.300000071526,
+        "n": 1,
+        "values": [
+          4183.3
+        ]
+      },
+      "half": {
+        "median": 2085.3000000715256,
+        "p25": 2085.3000000715256,
+        "p75": 2085.3000000715256,
+        "min": 2085.3000000715256,
+        "max": 2085.3000000715256,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 165.28125,
+        "p25": 165.28125,
+        "p75": 165.28125,
+        "min": 165.28125,
+        "max": 165.28125,
+        "n": 1,
+        "values": [
+          165.28
+        ]
+      },
+      "retainedMB": {
+        "median": 125.484375,
+        "p25": 125.484375,
+        "p75": 125.484375,
+        "min": 125.484375,
+        "max": 125.484375,
+        "n": 1,
+        "values": [
+          125.48
+        ]
+      },
+      "jsKB": {
+        "median": 84,
+        "p25": 84,
+        "p75": 84,
+        "min": 84,
+        "max": 84,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 4.6499999999999995,
+        "p25": 4.6499999999999995,
+        "p75": 4.6499999999999995,
+        "min": 4.6499999999999995,
+        "max": 4.6499999999999995,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 8.700000047683716,
+        "p25": 8.700000047683716,
+        "p75": 8.700000047683716,
+        "min": 8.700000047683716,
+        "max": 8.700000047683716,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 16.699999928474426,
+        "p25": 16.699999928474426,
+        "p75": 16.699999928474426,
+        "min": 16.699999928474426,
+        "max": 16.699999928474426,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 18.100000023841858,
+        "p25": 18.100000023841858,
+        "p75": 18.100000023841858,
+        "min": 18.100000023841858,
+        "max": 18.100000023841858,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 20.133325576782227,
+        "p25": 20.133325576782227,
+        "p75": 20.133325576782227,
+        "min": 20.133325576782227,
+        "max": 20.133325576782227,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999999301,
+        "p25": 0.9999999999999301,
+        "p75": 0.9999999999999301,
+        "min": 0.9999999999999301,
+        "max": 0.9999999999999301,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 7.152557373046875e-7,
+        "p25": 7.152557373046875e-7,
+        "p75": 7.152557373046875e-7,
+        "min": 7.152557373046875e-7,
+        "max": 7.152557373046875e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "sillon-fallback",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 2696.899999976158,
+        "p25": 2696.899999976158,
+        "p75": 2696.899999976158,
+        "min": 2696.899999976158,
+        "max": 2696.899999976158,
+        "n": 1,
+        "values": [
+          2696.9
+        ]
+      },
+      "complete": {
+        "median": 2696.899999976158,
+        "p25": 2696.899999976158,
+        "p75": 2696.899999976158,
+        "min": 2696.899999976158,
+        "max": 2696.899999976158,
+        "n": 1,
+        "values": [
+          2696.9
+        ]
+      },
+      "half": {
+        "median": 2696.899999976158,
+        "p25": 2696.899999976158,
+        "p75": 2696.899999976158,
+        "min": 2696.899999976158,
+        "max": 2696.899999976158,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 3501.078125,
+        "p25": 3501.078125,
+        "p75": 3501.078125,
+        "min": 3501.078125,
+        "max": 3501.078125,
+        "n": 1,
+        "values": [
+          3501.08
+        ]
+      },
+      "retainedMB": {
+        "median": 1573.234375,
+        "p25": 1573.234375,
+        "p75": 1573.234375,
+        "min": 1573.234375,
+        "max": 1573.234375,
+        "n": 1,
+        "values": [
+          1573.23
+        ]
+      },
+      "jsKB": {
+        "median": 82.1689453125,
+        "p25": 82.1689453125,
+        "p75": 82.1689453125,
+        "min": 82.1689453125,
+        "max": 82.1689453125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 2.9299999999999997,
+        "p25": 2.9299999999999997,
+        "p75": 2.9299999999999997,
+        "min": 2.9299999999999997,
+        "max": 2.9299999999999997,
+        "n": 1
+      },
+      "tbt": {
+        "median": 296,
+        "p25": 296,
+        "p75": 296,
+        "min": 296,
+        "max": 296,
+        "n": 1,
+        "values": [
+          296
+        ]
+      },
+      "maxLag": {
+        "median": 346.10000002384186,
+        "p25": 346.10000002384186,
+        "p75": 346.10000002384186,
+        "min": 346.10000002384186,
+        "max": 346.10000002384186,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 264.3000000715256,
+        "p25": 264.3000000715256,
+        "p75": 264.3000000715256,
+        "min": 264.3000000715256,
+        "max": 264.3000000715256,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 264.3000000715256,
+        "p25": 264.3000000715256,
+        "p75": 264.3000000715256,
+        "min": 264.3000000715256,
+        "max": 264.3000000715256,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 1221.061471939087,
+        "p25": 1221.061471939087,
+        "p75": 1221.061471939087,
+        "min": 1221.061471939087,
+        "max": 1221.061471939087,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999999301,
+        "p25": 0.9999999999999301,
+        "p75": 0.9999999999999301,
+        "min": 0.9999999999999301,
+        "max": 0.9999999999999301,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 7.152557373046875e-7,
+        "p25": 7.152557373046875e-7,
+        "p75": 7.152557373046875e-7,
+        "min": 7.152557373046875e-7,
+        "max": 7.152557373046875e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 3028.600000023842,
+        "p25": 3028.600000023842,
+        "p75": 3028.600000023842,
+        "min": 3028.600000023842,
+        "max": 3028.600000023842,
+        "n": 1,
+        "values": [
+          3028.6
+        ]
+      },
+      "complete": {
+        "median": 3028.600000023842,
+        "p25": 3028.600000023842,
+        "p75": 3028.600000023842,
+        "min": 3028.600000023842,
+        "max": 3028.600000023842,
+        "n": 1,
+        "values": [
+          3028.6
+        ]
+      },
+      "half": {
+        "median": 3028.600000023842,
+        "p25": 3028.600000023842,
+        "p75": 3028.600000023842,
+        "min": 3028.600000023842,
+        "max": 3028.600000023842,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 3242.265625,
+        "p25": 3242.265625,
+        "p75": 3242.265625,
+        "min": 3242.265625,
+        "max": 3242.265625,
+        "n": 1,
+        "values": [
+          3242.27
+        ]
+      },
+      "retainedMB": {
+        "median": 1996.171875,
+        "p25": 1996.171875,
+        "p75": 1996.171875,
+        "min": 1996.171875,
+        "max": 1996.171875,
+        "n": 1,
+        "values": [
+          1996.17
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 3.2699999999999996,
+        "p25": 3.2699999999999996,
+        "p75": 3.2699999999999996,
+        "min": 3.2699999999999996,
+        "max": 3.2699999999999996,
+        "n": 1
+      },
+      "tbt": {
+        "median": 132,
+        "p25": 132,
+        "p75": 132,
+        "min": 132,
+        "max": 132,
+        "n": 1,
+        "values": [
+          132
+        ]
+      },
+      "maxLag": {
+        "median": 132.70000004768372,
+        "p25": 132.70000004768372,
+        "p75": 132.70000004768372,
+        "min": 132.70000004768372,
+        "max": 132.70000004768372,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 31.299999952316284,
+        "p25": 31.299999952316284,
+        "p75": 31.299999952316284,
+        "min": 31.299999952316284,
+        "max": 31.299999952316284,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 35.60000002384186,
+        "p25": 35.60000002384186,
+        "p75": 35.60000002384186,
+        "min": 35.60000002384186,
+        "max": 35.60000002384186,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 441.1689672470093,
+        "p25": 441.1689672470093,
+        "p75": 441.1689672470093,
+        "min": 441.1689672470093,
+        "max": 441.1689672470093,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9916485512694518,
+        "p25": 0.9916485512694518,
+        "p75": 0.9916485512694518,
+        "min": 0.9916485512694518,
+        "max": 0.9916485512694518,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.2610524892807007,
+        "p25": 0.2610524892807007,
+        "p75": 0.2610524892807007,
+        "min": 0.2610524892807007,
+        "max": 0.2610524892807007,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 34.10000002384186,
+        "p25": 34.10000002384186,
+        "p75": 34.10000002384186,
+        "min": 34.10000002384186,
+        "max": 34.10000002384186,
+        "n": 1,
+        "values": [
+          34.1
+        ]
+      },
+      "complete": {
+        "median": 34.10000002384186,
+        "p25": 34.10000002384186,
+        "p75": 34.10000002384186,
+        "min": 34.10000002384186,
+        "max": 34.10000002384186,
+        "n": 1,
+        "values": [
+          34.1
+        ]
+      },
+      "half": {
+        "median": 34.10000002384186,
+        "p25": 34.10000002384186,
+        "p75": 34.10000002384186,
+        "min": 34.10000002384186,
+        "max": 34.10000002384186,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 35.09375,
+        "p25": 35.09375,
+        "p75": 35.09375,
+        "min": 35.09375,
+        "max": 35.09375,
+        "n": 1,
+        "values": [
+          35.09
+        ]
+      },
+      "retainedMB": {
+        "median": 42.8125,
+        "p25": 42.8125,
+        "p75": 42.8125,
+        "min": 42.8125,
+        "max": 42.8125,
+        "n": 1,
+        "values": [
+          42.81
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.08999999999999997,
+        "p25": 0.08999999999999997,
+        "p75": 0.08999999999999997,
+        "min": 0.08999999999999997,
+        "max": 0.08999999999999997,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 0.5,
+        "p25": 0.5,
+        "p75": 0.5,
+        "min": 0.5,
+        "max": 0.5,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 2.8046560287475586,
+        "p25": 2.8046560287475586,
+        "p75": 2.8046560287475586,
+        "min": 2.8046560287475586,
+        "max": 2.8046560287475586,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 42.10000002384186,
+        "p25": 42.10000002384186,
+        "p75": 42.10000002384186,
+        "min": 42.10000002384186,
+        "max": 42.10000002384186,
+        "n": 1,
+        "values": [
+          42.1
+        ]
+      },
+      "complete": {
+        "median": 42.10000002384186,
+        "p25": 42.10000002384186,
+        "p75": 42.10000002384186,
+        "min": 42.10000002384186,
+        "max": 42.10000002384186,
+        "n": 1,
+        "values": [
+          42.1
+        ]
+      },
+      "half": {
+        "median": 42.10000002384186,
+        "p25": 42.10000002384186,
+        "p75": 42.10000002384186,
+        "min": 42.10000002384186,
+        "max": 42.10000002384186,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 58.125,
+        "p25": 58.125,
+        "p75": 58.125,
+        "min": 58.125,
+        "max": 58.125,
+        "n": 1,
+        "values": [
+          58.13
+        ]
+      },
+      "retainedMB": {
+        "median": 65.328125,
+        "p25": 65.328125,
+        "p75": 65.328125,
+        "min": 65.328125,
+        "max": 65.328125,
+        "n": 1,
+        "values": [
+          65.33
+        ]
+      },
+      "jsKB": {
+        "median": 63.61328125,
+        "p25": 63.61328125,
+        "p75": 63.61328125,
+        "min": 63.61328125,
+        "max": 63.61328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.09999999999999998,
+        "p25": 0.09999999999999998,
+        "p75": 0.09999999999999998,
+        "min": 0.09999999999999998,
+        "max": 0.09999999999999998,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 17.899999976158142,
+        "p25": 17.899999976158142,
+        "p75": 17.899999976158142,
+        "min": 17.899999976158142,
+        "max": 17.899999976158142,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 5.245491981506348,
+        "p25": 5.245491981506348,
+        "p75": 5.245491981506348,
+        "min": 5.245491981506348,
+        "max": 5.245491981506348,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 5513.299999952316,
+        "p25": 5513.299999952316,
+        "p75": 5513.299999952316,
+        "min": 5513.299999952316,
+        "max": 5513.299999952316,
+        "n": 1,
+        "values": [
+          5513.3
+        ]
+      },
+      "complete": {
+        "median": 5513.299999952316,
+        "p25": 5513.299999952316,
+        "p75": 5513.299999952316,
+        "min": 5513.299999952316,
+        "max": 5513.299999952316,
+        "n": 1,
+        "values": [
+          5513.3
+        ]
+      },
+      "half": {
+        "median": 5513.299999952316,
+        "p25": 5513.299999952316,
+        "p75": 5513.299999952316,
+        "min": 5513.299999952316,
+        "max": 5513.299999952316,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 4183.4375,
+        "p25": 4183.4375,
+        "p75": 4183.4375,
+        "min": 4183.4375,
+        "max": 4183.4375,
+        "n": 1,
+        "values": [
+          4183.44
+        ]
+      },
+      "retainedMB": {
+        "median": 1667.90625,
+        "p25": 1667.90625,
+        "p75": 1667.90625,
+        "min": 1667.90625,
+        "max": 1667.90625,
+        "n": 1,
+        "values": [
+          1667.91
+        ]
+      },
+      "jsKB": {
+        "median": 68.2841796875,
+        "p25": 68.2841796875,
+        "p75": 68.2841796875,
+        "min": 68.2841796875,
+        "max": 68.2841796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 5.769999999999999,
+        "p25": 5.769999999999999,
+        "p75": 5.769999999999999,
+        "min": 5.769999999999999,
+        "max": 5.769999999999999,
+        "n": 1
+      },
+      "tbt": {
+        "median": 134,
+        "p25": 134,
+        "p75": 134,
+        "min": 134,
+        "max": 134,
+        "n": 1,
+        "values": [
+          134
+        ]
+      },
+      "maxLag": {
+        "median": 136,
+        "p25": 136,
+        "p75": 136,
+        "min": 136,
+        "max": 136,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 7.399999976158142,
+        "p25": 7.399999976158142,
+        "p75": 7.399999976158142,
+        "min": 7.399999976158142,
+        "max": 7.399999976158142,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 52.800000071525574,
+        "p25": 52.800000071525574,
+        "p75": 52.800000071525574,
+        "min": 52.800000071525574,
+        "max": 52.800000071525574,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3.5251102447509766,
+        "p25": 3.5251102447509766,
+        "p75": 3.5251102447509766,
+        "min": 3.5251102447509766,
+        "max": 3.5251102447509766,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d1h",
+      "contender": "naive",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 5084,
+        "p25": 5084,
+        "p75": 5084,
+        "min": 5084,
+        "max": 5084,
+        "n": 1,
+        "values": [
+          5084
+        ]
+      },
+      "complete": {
+        "median": 5084,
+        "p25": 5084,
+        "p75": 5084,
+        "min": 5084,
+        "max": 5084,
+        "n": 1,
+        "values": [
+          5084
+        ]
+      },
+      "half": {
+        "median": 5084,
+        "p25": 5084,
+        "p75": 5084,
+        "min": 5084,
+        "max": 5084,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 4205.296875,
+        "p25": 4205.296875,
+        "p75": 4205.296875,
+        "min": 4205.296875,
+        "max": 4205.296875,
+        "n": 1,
+        "values": [
+          4205.3
+        ]
+      },
+      "retainedMB": {
+        "median": 2973,
+        "p25": 2973,
+        "p75": 2973,
+        "min": 2973,
+        "max": 2973,
+        "n": 1,
+        "values": [
+          2973
+        ]
+      },
+      "jsKB": {
+        "median": 4.36328125,
+        "p25": 4.36328125,
+        "p75": 4.36328125,
+        "min": 4.36328125,
+        "max": 4.36328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 5.32,
+        "p25": 5.32,
+        "p75": 5.32,
+        "min": 5.32,
+        "max": 5.32,
+        "n": 1
+      },
+      "tbt": {
+        "median": 584,
+        "p25": 584,
+        "p75": 584,
+        "min": 584,
+        "max": 584,
+        "n": 1,
+        "values": [
+          584
+        ]
+      },
+      "maxLag": {
+        "median": 597.1999999284744,
+        "p25": 597.1999999284744,
+        "p75": 597.1999999284744,
+        "min": 597.1999999284744,
+        "max": 597.1999999284744,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 14.100000023841858,
+        "p25": 14.100000023841858,
+        "p75": 14.100000023841858,
+        "min": 14.100000023841858,
+        "max": 14.100000023841858,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 464.89999997615814,
+        "p25": 464.89999997615814,
+        "p75": 464.89999997615814,
+        "min": 464.89999997615814,
+        "max": 464.89999997615814,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 1320.638216972351,
+        "p25": 1320.638216972351,
+        "p75": 1320.638216972351,
+        "min": 1320.638216972351,
+        "max": 1320.638216972351,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.999405511645491,
+        "p25": 0.999405511645491,
+        "p75": 0.999405511645491,
+        "min": 0.999405511645491,
+        "max": 0.999405511645491,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.24907168745994568,
+        "p25": 0.24907168745994568,
+        "p75": 0.24907168745994568,
+        "min": 0.24907168745994568,
+        "max": 0.24907168745994568,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "webcodecs",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 96.60000002384186,
+        "p25": 96.60000002384186,
+        "p75": 96.60000002384186,
+        "min": 96.60000002384186,
+        "max": 96.60000002384186,
+        "n": 1,
+        "values": [
+          96.6
+        ]
+      },
+      "complete": {
+        "median": 12362.899999976158,
+        "p25": 12362.899999976158,
+        "p75": 12362.899999976158,
+        "min": 12362.899999976158,
+        "max": 12362.899999976158,
+        "n": 1,
+        "values": [
+          12362.9
+        ]
+      },
+      "half": {
+        "median": 6047.799999952316,
+        "p25": 6047.799999952316,
+        "p75": 6047.799999952316,
+        "min": 6047.799999952316,
+        "max": 6047.799999952316,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 219.09375,
+        "p25": 219.09375,
+        "p75": 219.09375,
+        "min": 219.09375,
+        "max": 219.09375,
+        "n": 1,
+        "values": [
+          219.09
+        ]
+      },
+      "retainedMB": {
+        "median": 172.421875,
+        "p25": 172.421875,
+        "p75": 172.421875,
+        "min": 172.421875,
+        "max": 172.421875,
+        "n": 1,
+        "values": [
+          172.42
+        ]
+      },
+      "jsKB": {
+        "median": 84,
+        "p25": 84,
+        "p75": 84,
+        "min": 84,
+        "max": 84,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 13.379999999999999,
+        "p25": 13.379999999999999,
+        "p75": 13.379999999999999,
+        "min": 13.379999999999999,
+        "max": 13.379999999999999,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 4.099999904632568,
+        "p25": 4.099999904632568,
+        "p75": 4.099999904632568,
+        "min": 4.099999904632568,
+        "max": 4.099999904632568,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 14.299999952316284,
+        "p25": 14.299999952316284,
+        "p75": 14.299999952316284,
+        "min": 14.299999952316284,
+        "max": 14.299999952316284,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 16.200000047683716,
+        "p25": 16.200000047683716,
+        "p75": 16.200000047683716,
+        "min": 16.200000047683716,
+        "max": 16.200000047683716,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 39.27482032775879,
+        "p25": 39.27482032775879,
+        "p75": 39.27482032775879,
+        "min": 39.27482032775879,
+        "max": 39.27482032775879,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999998658,
+        "p25": 0.9999999999998658,
+        "p75": 0.9999999999998658,
+        "min": 0.9999999999998658,
+        "max": 0.9999999999998658,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 7.748603820800781e-7,
+        "p25": 7.748603820800781e-7,
+        "p75": 7.748603820800781e-7,
+        "min": 7.748603820800781e-7,
+        "max": 7.748603820800781e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "sillon-fallback",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 8081.300000071526,
+        "p25": 8081.300000071526,
+        "p75": 8081.300000071526,
+        "min": 8081.300000071526,
+        "max": 8081.300000071526,
+        "n": 1,
+        "values": [
+          8081.3
+        ]
+      },
+      "complete": {
+        "median": 8081.300000071526,
+        "p25": 8081.300000071526,
+        "p75": 8081.300000071526,
+        "min": 8081.300000071526,
+        "max": 8081.300000071526,
+        "n": 1,
+        "values": [
+          8081.3
+        ]
+      },
+      "half": {
+        "median": 8081.300000071526,
+        "p25": 8081.300000071526,
+        "p75": 8081.300000071526,
+        "min": 8081.300000071526,
+        "max": 8081.300000071526,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 11758,
+        "p25": 11758,
+        "p75": 11758,
+        "min": 11758,
+        "max": 11758,
+        "n": 1,
+        "values": [
+          11758
+        ]
+      },
+      "retainedMB": {
+        "median": 4608.03125,
+        "p25": 4608.03125,
+        "p75": 4608.03125,
+        "min": 4608.03125,
+        "max": 4608.03125,
+        "n": 1,
+        "values": [
+          4608.03
+        ]
+      },
+      "jsKB": {
+        "median": 82.1689453125,
+        "p25": 82.1689453125,
+        "p75": 82.1689453125,
+        "min": 82.1689453125,
+        "max": 82.1689453125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 8.56,
+        "p25": 8.56,
+        "p75": 8.56,
+        "min": 8.56,
+        "max": 8.56,
+        "n": 1
+      },
+      "tbt": {
+        "median": 1050,
+        "p25": 1050,
+        "p75": 1050,
+        "min": 1050,
+        "max": 1050,
+        "n": 1,
+        "values": [
+          1050
+        ]
+      },
+      "maxLag": {
+        "median": 1093.7999999523163,
+        "p25": 1093.7999999523163,
+        "p75": 1093.7999999523163,
+        "min": 1093.7999999523163,
+        "max": 1093.7999999523163,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 1043.2000000476837,
+        "p25": 1043.2000000476837,
+        "p75": 1043.2000000476837,
+        "min": 1043.2000000476837,
+        "max": 1043.2000000476837,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3657.8659801483154,
+        "p25": 3657.8659801483154,
+        "p75": 3657.8659801483154,
+        "min": 3657.8659801483154,
+        "max": 3657.8659801483154,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999998658,
+        "p25": 0.9999999999998658,
+        "p75": 0.9999999999998658,
+        "min": 0.9999999999998658,
+        "max": 0.9999999999998658,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 7.748603820800781e-7,
+        "p25": 7.748603820800781e-7,
+        "p75": 7.748603820800781e-7,
+        "min": 7.748603820800781e-7,
+        "max": 7.748603820800781e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 8782.199999928474,
+        "p25": 8782.199999928474,
+        "p75": 8782.199999928474,
+        "min": 8782.199999928474,
+        "max": 8782.199999928474,
+        "n": 1,
+        "values": [
+          8782.2
+        ]
+      },
+      "complete": {
+        "median": 8782.199999928474,
+        "p25": 8782.199999928474,
+        "p75": 8782.199999928474,
+        "min": 8782.199999928474,
+        "max": 8782.199999928474,
+        "n": 1,
+        "values": [
+          8782.2
+        ]
+      },
+      "half": {
+        "median": 8782.199999928474,
+        "p25": 8782.199999928474,
+        "p75": 8782.199999928474,
+        "min": 8782.199999928474,
+        "max": 8782.199999928474,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 9418.84375,
+        "p25": 9418.84375,
+        "p75": 9418.84375,
+        "min": 9418.84375,
+        "max": 9418.84375,
+        "n": 1,
+        "values": [
+          9418.84
+        ]
+      },
+      "retainedMB": {
+        "median": 5650.109375,
+        "p25": 5650.109375,
+        "p75": 5650.109375,
+        "min": 5650.109375,
+        "max": 5650.109375,
+        "n": 1,
+        "values": [
+          5650.11
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 9.33,
+        "p25": 9.33,
+        "p75": 9.33,
+        "min": 9.33,
+        "max": 9.33,
+        "n": 1
+      },
+      "tbt": {
+        "median": 392,
+        "p25": 392,
+        "p75": 392,
+        "min": 392,
+        "max": 392,
+        "n": 1,
+        "values": [
+          392
+        ]
+      },
+      "maxLag": {
+        "median": 408.59999990463257,
+        "p25": 408.59999990463257,
+        "p75": 408.59999990463257,
+        "min": 408.59999990463257,
+        "max": 408.59999990463257,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 381.10000002384186,
+        "p25": 381.10000002384186,
+        "p75": 381.10000002384186,
+        "min": 381.10000002384186,
+        "max": 381.10000002384186,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 1320.4903783798218,
+        "p25": 1320.4903783798218,
+        "p75": 1320.4903783798218,
+        "min": 1320.4903783798218,
+        "max": 1320.4903783798218,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9933795791969234,
+        "p25": 0.9933795791969234,
+        "p75": 0.9933795791969234,
+        "min": 0.9933795791969234,
+        "max": 0.9933795791969234,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.23401877284049988,
+        "p25": 0.23401877284049988,
+        "p75": 0.23401877284049988,
+        "min": 0.23401877284049988,
+        "max": 0.23401877284049988,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 42,
+        "p25": 42,
+        "p75": 42,
+        "min": 42,
+        "max": 42,
+        "n": 1,
+        "values": [
+          42
+        ]
+      },
+      "complete": {
+        "median": 42,
+        "p25": 42,
+        "p75": 42,
+        "min": 42,
+        "max": 42,
+        "n": 1,
+        "values": [
+          42
+        ]
+      },
+      "half": {
+        "median": 42,
+        "p25": 42,
+        "p75": 42,
+        "min": 42,
+        "max": 42,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 35.40625,
+        "p25": 35.40625,
+        "p75": 35.40625,
+        "min": 35.40625,
+        "max": 35.40625,
+        "n": 1,
+        "values": [
+          35.41
+        ]
+      },
+      "retainedMB": {
+        "median": 43.09375,
+        "p25": 43.09375,
+        "p75": 43.09375,
+        "min": 43.09375,
+        "max": 43.09375,
+        "n": 1,
+        "values": [
+          43.09
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.09999999999999987,
+        "p25": 0.09999999999999987,
+        "p75": 0.09999999999999987,
+        "min": 0.09999999999999987,
+        "max": 0.09999999999999987,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 3.100000023841858,
+        "p25": 3.100000023841858,
+        "p75": 3.100000023841858,
+        "min": 3.100000023841858,
+        "max": 3.100000023841858,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 2.8072309494018555,
+        "p25": 2.8072309494018555,
+        "p75": 2.8072309494018555,
+        "min": 2.8072309494018555,
+        "max": 2.8072309494018555,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 76.29999995231628,
+        "p25": 76.29999995231628,
+        "p75": 76.29999995231628,
+        "min": 76.29999995231628,
+        "max": 76.29999995231628,
+        "n": 1,
+        "values": [
+          76.3
+        ]
+      },
+      "complete": {
+        "median": 76.29999995231628,
+        "p25": 76.29999995231628,
+        "p75": 76.29999995231628,
+        "min": 76.29999995231628,
+        "max": 76.29999995231628,
+        "n": 1,
+        "values": [
+          76.3
+        ]
+      },
+      "half": {
+        "median": 76.29999995231628,
+        "p25": 76.29999995231628,
+        "p75": 76.29999995231628,
+        "min": 76.29999995231628,
+        "max": 76.29999995231628,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 68.765625,
+        "p25": 68.765625,
+        "p75": 68.765625,
+        "min": 68.765625,
+        "max": 68.765625,
+        "n": 1,
+        "values": [
+          68.77
+        ]
+      },
+      "retainedMB": {
+        "median": 76.125,
+        "p25": 76.125,
+        "p75": 76.125,
+        "min": 76.125,
+        "max": 76.125,
+        "n": 1,
+        "values": [
+          76.13
+        ]
+      },
+      "jsKB": {
+        "median": 63.61328125,
+        "p25": 63.61328125,
+        "p75": 63.61328125,
+        "min": 63.61328125,
+        "max": 63.61328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.1399999999999999,
+        "p25": 0.1399999999999999,
+        "p75": 0.1399999999999999,
+        "min": 0.1399999999999999,
+        "max": 0.1399999999999999,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 7.300000071525574,
+        "p25": 7.300000071525574,
+        "p75": 7.300000071525574,
+        "min": 7.300000071525574,
+        "max": 7.300000071525574,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.4777088165283203,
+        "p25": 3.4777088165283203,
+        "p75": 3.4777088165283203,
+        "min": 3.4777088165283203,
+        "max": 3.4777088165283203,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 17409,
+        "p25": 17409,
+        "p75": 17409,
+        "min": 17409,
+        "max": 17409,
+        "n": 1,
+        "values": [
+          17409
+        ]
+      },
+      "complete": {
+        "median": 17409,
+        "p25": 17409,
+        "p75": 17409,
+        "min": 17409,
+        "max": 17409,
+        "n": 1,
+        "values": [
+          17409
+        ]
+      },
+      "half": {
+        "median": 17409,
+        "p25": 17409,
+        "p75": 17409,
+        "min": 17409,
+        "max": 17409,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 9418.53125,
+        "p25": 9418.53125,
+        "p75": 9418.53125,
+        "min": 9418.53125,
+        "max": 9418.53125,
+        "n": 1,
+        "values": [
+          9418.53
+        ]
+      },
+      "retainedMB": {
+        "median": 1287.234375,
+        "p25": 1287.234375,
+        "p75": 1287.234375,
+        "min": 1287.234375,
+        "max": 1287.234375,
+        "n": 1,
+        "values": [
+          1287.23
+        ]
+      },
+      "jsKB": {
+        "median": 68.2841796875,
+        "p25": 68.2841796875,
+        "p75": 68.2841796875,
+        "min": 68.2841796875,
+        "max": 68.2841796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 18.099999999999998,
+        "p25": 18.099999999999998,
+        "p75": 18.099999999999998,
+        "min": 18.099999999999998,
+        "max": 18.099999999999998,
+        "n": 1
+      },
+      "tbt": {
+        "median": 630,
+        "p25": 630,
+        "p75": 630,
+        "min": 630,
+        "max": 630,
+        "n": 1,
+        "values": [
+          630
+        ]
+      },
+      "maxLag": {
+        "median": 629.9000000953674,
+        "p25": 629.9000000953674,
+        "p75": 629.9000000953674,
+        "min": 629.9000000953674,
+        "max": 629.9000000953674,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 623.1999999284744,
+        "p25": 623.1999999284744,
+        "p75": 623.1999999284744,
+        "min": 623.1999999284744,
+        "max": 623.1999999284744,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 4.583395957946777,
+        "p25": 4.583395957946777,
+        "p75": 4.583395957946777,
+        "min": 4.583395957946777,
+        "max": 4.583395957946777,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "d3h",
+      "contender": "naive",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 15261.799999952316,
+        "p25": 15261.799999952316,
+        "p75": 15261.799999952316,
+        "min": 15261.799999952316,
+        "max": 15261.799999952316,
+        "n": 1,
+        "values": [
+          15261.8
+        ]
+      },
+      "complete": {
+        "median": 15261.799999952316,
+        "p25": 15261.799999952316,
+        "p75": 15261.799999952316,
+        "min": 15261.799999952316,
+        "max": 15261.799999952316,
+        "n": 1,
+        "values": [
+          15261.8
+        ]
+      },
+      "half": {
+        "median": 15261.799999952316,
+        "p25": 15261.799999952316,
+        "p75": 15261.799999952316,
+        "min": 15261.799999952316,
+        "max": 15261.799999952316,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 12384.296875,
+        "p25": 12384.296875,
+        "p75": 12384.296875,
+        "min": 12384.296875,
+        "max": 12384.296875,
+        "n": 1,
+        "values": [
+          12384.3
+        ]
+      },
+      "retainedMB": {
+        "median": 8628.234375,
+        "p25": 8628.234375,
+        "p75": 8628.234375,
+        "min": 8628.234375,
+        "max": 8628.234375,
+        "n": 1,
+        "values": [
+          8628.23
+        ]
+      },
+      "jsKB": {
+        "median": 4.36328125,
+        "p25": 4.36328125,
+        "p75": 4.36328125,
+        "min": 4.36328125,
+        "max": 4.36328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 15.78,
+        "p25": 15.78,
+        "p75": 15.78,
+        "min": 15.78,
+        "max": 15.78,
+        "n": 1
+      },
+      "tbt": {
+        "median": 1983,
+        "p25": 1983,
+        "p75": 1983,
+        "min": 1983,
+        "max": 1983,
+        "n": 1,
+        "values": [
+          1983
+        ]
+      },
+      "maxLag": {
+        "median": 2003.5999999046326,
+        "p25": 2003.5999999046326,
+        "p75": 2003.5999999046326,
+        "min": 2003.5999999046326,
+        "max": 2003.5999999046326,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 1915.8999999761581,
+        "p25": 1915.8999999761581,
+        "p75": 1915.8999999761581,
+        "min": 1915.8999999761581,
+        "max": 1915.8999999761581,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3956.473132133484,
+        "p25": 3956.473132133484,
+        "p75": 3956.473132133484,
+        "min": 3956.473132133484,
+        "max": 3956.473132133484,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9994284178283124,
+        "p25": 0.9994284178283124,
+        "p75": 0.9994284178283124,
+        "min": 0.9994284178283124,
+        "max": 0.9994284178283124,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.19210457801818848,
+        "p25": 0.19210457801818848,
+        "p75": 0.19210457801818848,
+        "min": 0.19210457801818848,
+        "max": 0.19210457801818848,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "webcodecs",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 124.10000002384186,
+        "p25": 124.10000002384186,
+        "p75": 124.10000002384186,
+        "min": 124.10000002384186,
+        "max": 124.10000002384186,
+        "n": 1,
+        "values": [
+          124.1
+        ]
+      },
+      "complete": {
+        "median": 207.39999997615814,
+        "p25": 207.39999997615814,
+        "p75": 207.39999997615814,
+        "min": 207.39999997615814,
+        "max": 207.39999997615814,
+        "n": 1,
+        "values": [
+          207.4
+        ]
+      },
+      "half": {
+        "median": 126.10000002384186,
+        "p25": 126.10000002384186,
+        "p75": 126.10000002384186,
+        "min": 126.10000002384186,
+        "max": 126.10000002384186,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 65.609375,
+        "p25": 65.609375,
+        "p75": 65.609375,
+        "min": 65.609375,
+        "max": 65.609375,
+        "n": 1,
+        "values": [
+          65.61
+        ]
+      },
+      "retainedMB": {
+        "median": 70.328125,
+        "p25": 70.328125,
+        "p75": 70.328125,
+        "min": 70.328125,
+        "max": 70.328125,
+        "n": 1,
+        "values": [
+          70.33
+        ]
+      },
+      "jsKB": {
+        "median": 84,
+        "p25": 84,
+        "p75": 84,
+        "min": 84,
+        "max": 84,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.27000000000000013,
+        "p25": 0.27000000000000013,
+        "p75": 0.27000000000000013,
+        "min": 0.27000000000000013,
+        "max": 0.27000000000000013,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 7.700000047683716,
+        "p25": 7.700000047683716,
+        "p75": 7.700000047683716,
+        "min": 7.700000047683716,
+        "max": 7.700000047683716,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 7.5,
+        "p25": 7.5,
+        "p75": 7.5,
+        "min": 7.5,
+        "max": 7.5,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 7.5,
+        "p25": 7.5,
+        "p75": 7.5,
+        "min": 7.5,
+        "max": 7.5,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3.6847448348999023,
+        "p25": 3.6847448348999023,
+        "p75": 3.6847448348999023,
+        "min": 3.6847448348999023,
+        "max": 3.6847448348999023,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999998569,
+        "p25": 0.9999999999998569,
+        "p75": 0.9999999999998569,
+        "min": 0.9999999999998569,
+        "max": 0.9999999999998569,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 5.364418029785156e-7,
+        "p25": 5.364418029785156e-7,
+        "p75": 5.364418029785156e-7,
+        "min": 5.364418029785156e-7,
+        "max": 5.364418029785156e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "sillon-fallback",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 130.09999990463257,
+        "p25": 130.09999990463257,
+        "p75": 130.09999990463257,
+        "min": 130.09999990463257,
+        "max": 130.09999990463257,
+        "n": 1,
+        "values": [
+          130.1
+        ]
+      },
+      "complete": {
+        "median": 130.09999990463257,
+        "p25": 130.09999990463257,
+        "p75": 130.09999990463257,
+        "min": 130.09999990463257,
+        "max": 130.09999990463257,
+        "n": 1,
+        "values": [
+          130.1
+        ]
+      },
+      "half": {
+        "median": 130.09999990463257,
+        "p25": 130.09999990463257,
+        "p75": 130.09999990463257,
+        "min": 130.09999990463257,
+        "max": 130.09999990463257,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 135.34375,
+        "p25": 135.34375,
+        "p75": 135.34375,
+        "min": 135.34375,
+        "max": 135.34375,
+        "n": 1,
+        "values": [
+          135.34
+        ]
+      },
+      "retainedMB": {
+        "median": 105.515625,
+        "p25": 105.515625,
+        "p75": 105.515625,
+        "min": 105.515625,
+        "max": 105.515625,
+        "n": 1,
+        "values": [
+          105.52
+        ]
+      },
+      "jsKB": {
+        "median": 82.1689453125,
+        "p25": 82.1689453125,
+        "p75": 82.1689453125,
+        "min": 82.1689453125,
+        "max": 82.1689453125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.21000000000000008,
+        "p25": 0.21000000000000008,
+        "p75": 0.21000000000000008,
+        "min": 0.21000000000000008,
+        "max": 0.21000000000000008,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 13.600000023841858,
+        "p25": 13.600000023841858,
+        "p75": 13.600000023841858,
+        "min": 13.600000023841858,
+        "max": 13.600000023841858,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 3.4147939682006836,
+        "p25": 3.4147939682006836,
+        "p75": 3.4147939682006836,
+        "min": 3.4147939682006836,
+        "max": 3.4147939682006836,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9999999999998569,
+        "p25": 0.9999999999998569,
+        "p75": 0.9999999999998569,
+        "min": 0.9999999999998569,
+        "max": 0.9999999999998569,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 5.364418029785156e-7,
+        "p25": 5.364418029785156e-7,
+        "p75": 5.364418029785156e-7,
+        "min": 5.364418029785156e-7,
+        "max": 5.364418029785156e-7,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 234.70000004768372,
+        "p25": 234.70000004768372,
+        "p75": 234.70000004768372,
+        "min": 234.70000004768372,
+        "max": 234.70000004768372,
+        "n": 1,
+        "values": [
+          234.7
+        ]
+      },
+      "complete": {
+        "median": 234.70000004768372,
+        "p25": 234.70000004768372,
+        "p75": 234.70000004768372,
+        "min": 234.70000004768372,
+        "max": 234.70000004768372,
+        "n": 1,
+        "values": [
+          234.7
+        ]
+      },
+      "half": {
+        "median": 234.70000004768372,
+        "p25": 234.70000004768372,
+        "p75": 234.70000004768372,
+        "min": 234.70000004768372,
+        "max": 234.70000004768372,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 136.9375,
+        "p25": 136.9375,
+        "p75": 136.9375,
+        "min": 136.9375,
+        "max": 136.9375,
+        "n": 1,
+        "values": [
+          136.94
+        ]
+      },
+      "retainedMB": {
+        "median": 217.984375,
+        "p25": 217.984375,
+        "p75": 217.984375,
+        "min": 217.984375,
+        "max": 217.984375,
+        "n": 1,
+        "values": [
+          217.98
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.2600000000000001,
+        "p25": 0.2600000000000001,
+        "p75": 0.2600000000000001,
+        "min": 0.2600000000000001,
+        "max": 0.2600000000000001,
+        "n": 1
+      },
+      "tbt": {
+        "median": 42,
+        "p25": 42,
+        "p75": 42,
+        "min": 42,
+        "max": 42,
+        "n": 1,
+        "values": [
+          42
+        ]
+      },
+      "maxLag": {
+        "median": 92.5,
+        "p25": 92.5,
+        "p75": 92.5,
+        "min": 92.5,
+        "max": 92.5,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 0.30000007152557373,
+        "p25": 0.30000007152557373,
+        "p75": 0.30000007152557373,
+        "min": 0.30000007152557373,
+        "max": 0.30000007152557373,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 5.305476188659668,
+        "p25": 5.305476188659668,
+        "p75": 5.305476188659668,
+        "min": 5.305476188659668,
+        "max": 5.305476188659668,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9961025649808971,
+        "p25": 0.9961025649808971,
+        "p75": 0.9961025649808971,
+        "min": 0.9961025649808971,
+        "max": 0.9961025649808971,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.20384221524000168,
+        "p25": 0.20384221524000168,
+        "p75": 0.20384221524000168,
+        "min": 0.20384221524000168,
+        "max": 0.20384221524000168,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 41.39999997615814,
+        "p25": 41.39999997615814,
+        "p75": 41.39999997615814,
+        "min": 41.39999997615814,
+        "max": 41.39999997615814,
+        "n": 1,
+        "values": [
+          41.4
+        ]
+      },
+      "complete": {
+        "median": 41.39999997615814,
+        "p25": 41.39999997615814,
+        "p75": 41.39999997615814,
+        "min": 41.39999997615814,
+        "max": 41.39999997615814,
+        "n": 1,
+        "values": [
+          41.4
+        ]
+      },
+      "half": {
+        "median": 41.39999997615814,
+        "p25": 41.39999997615814,
+        "p75": 41.39999997615814,
+        "min": 41.39999997615814,
+        "max": 41.39999997615814,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 35.5,
+        "p25": 35.5,
+        "p75": 35.5,
+        "min": 35.5,
+        "max": 35.5,
+        "n": 1,
+        "values": [
+          35.5
+        ]
+      },
+      "retainedMB": {
+        "median": 43.03125,
+        "p25": 43.03125,
+        "p75": 43.03125,
+        "min": 43.03125,
+        "max": 43.03125,
+        "n": 1,
+        "values": [
+          43.03
+        ]
+      },
+      "jsKB": {
+        "median": 18.57421875,
+        "p25": 18.57421875,
+        "p75": 18.57421875,
+        "min": 18.57421875,
+        "max": 18.57421875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.07999999999999996,
+        "p25": 0.07999999999999996,
+        "p75": 0.07999999999999996,
+        "min": 0.07999999999999996,
+        "max": 0.07999999999999996,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 3.100000023841858,
+        "p25": 3.100000023841858,
+        "p75": 3.100000023841858,
+        "min": 3.100000023841858,
+        "max": 3.100000023841858,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 2.794252395629883,
+        "p25": 2.794252395629883,
+        "p75": 2.794252395629883,
+        "min": 2.794252395629883,
+        "max": 2.794252395629883,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 38.5,
+        "p25": 38.5,
+        "p75": 38.5,
+        "min": 38.5,
+        "max": 38.5,
+        "n": 1,
+        "values": [
+          38.5
+        ]
+      },
+      "complete": {
+        "median": 38.5,
+        "p25": 38.5,
+        "p75": 38.5,
+        "min": 38.5,
+        "max": 38.5,
+        "n": 1,
+        "values": [
+          38.5
+        ]
+      },
+      "half": {
+        "median": 38.5,
+        "p25": 38.5,
+        "p75": 38.5,
+        "min": 38.5,
+        "max": 38.5,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 54.46875,
+        "p25": 54.46875,
+        "p75": 54.46875,
+        "min": 54.46875,
+        "max": 54.46875,
+        "n": 1,
+        "values": [
+          54.47
+        ]
+      },
+      "retainedMB": {
+        "median": 61.734375,
+        "p25": 61.734375,
+        "p75": 61.734375,
+        "min": 61.734375,
+        "max": 61.734375,
+        "n": 1,
+        "values": [
+          61.73
+        ]
+      },
+      "jsKB": {
+        "median": 63.61328125,
+        "p25": 63.61328125,
+        "p75": 63.61328125,
+        "min": 63.61328125,
+        "max": 63.61328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.09999999999999998,
+        "p25": 0.09999999999999998,
+        "p75": 0.09999999999999998,
+        "min": 0.09999999999999998,
+        "max": 0.09999999999999998,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 11.700000047683716,
+        "p25": 11.700000047683716,
+        "p75": 11.700000047683716,
+        "min": 11.700000047683716,
+        "max": 11.700000047683716,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 4.137215614318848,
+        "p25": 4.137215614318848,
+        "p75": 4.137215614318848,
+        "min": 4.137215614318848,
+        "max": 4.137215614318848,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 351.7999999523163,
+        "p25": 351.7999999523163,
+        "p75": 351.7999999523163,
+        "min": 351.7999999523163,
+        "max": 351.7999999523163,
+        "n": 1,
+        "values": [
+          351.8
+        ]
+      },
+      "complete": {
+        "median": 351.7999999523163,
+        "p25": 351.7999999523163,
+        "p75": 351.7999999523163,
+        "min": 351.7999999523163,
+        "max": 351.7999999523163,
+        "n": 1,
+        "values": [
+          351.8
+        ]
+      },
+      "half": {
+        "median": 351.7999999523163,
+        "p25": 351.7999999523163,
+        "p75": 351.7999999523163,
+        "min": 351.7999999523163,
+        "max": 351.7999999523163,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 254.328125,
+        "p25": 254.328125,
+        "p75": 254.328125,
+        "min": 254.328125,
+        "max": 254.328125,
+        "n": 1,
+        "values": [
+          254.33
+        ]
+      },
+      "retainedMB": {
+        "median": 213.078125,
+        "p25": 213.078125,
+        "p75": 213.078125,
+        "min": 213.078125,
+        "max": 213.078125,
+        "n": 1,
+        "values": [
+          213.08
+        ]
+      },
+      "jsKB": {
+        "median": 68.2841796875,
+        "p25": 68.2841796875,
+        "p75": 68.2841796875,
+        "min": 68.2841796875,
+        "max": 68.2841796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.36,
+        "p25": 0.36,
+        "p75": 0.36,
+        "min": 0.36,
+        "max": 0.36,
+        "n": 1
+      },
+      "tbt": {
+        "median": 43,
+        "p25": 43,
+        "p75": 43,
+        "min": 43,
+        "max": 43,
+        "n": 1,
+        "values": [
+          43
+        ]
+      },
+      "maxLag": {
+        "median": 86.69999992847443,
+        "p25": 86.69999992847443,
+        "p75": 86.69999992847443,
+        "min": 86.69999992847443,
+        "max": 86.69999992847443,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 5.299999952316284,
+        "p25": 5.299999952316284,
+        "p75": 5.299999952316284,
+        "min": 5.299999952316284,
+        "max": 5.299999952316284,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 5.299999952316284,
+        "p25": 5.299999952316284,
+        "p75": 5.299999952316284,
+        "min": 5.299999952316284,
+        "max": 5.299999952316284,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 3.5461769104003906,
+        "p25": 3.5461769104003906,
+        "p75": 3.5461769104003906,
+        "min": 3.5461769104003906,
+        "max": 3.5461769104003906,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "m2m",
+      "contender": "naive",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@48000",
+      "version": "156.0.8078.4",
+      "firstBars": {
+        "median": 295.89999997615814,
+        "p25": 295.89999997615814,
+        "p75": 295.89999997615814,
+        "min": 295.89999997615814,
+        "max": 295.89999997615814,
+        "n": 1,
+        "values": [
+          295.9
+        ]
+      },
+      "complete": {
+        "median": 295.89999997615814,
+        "p25": 295.89999997615814,
+        "p75": 295.89999997615814,
+        "min": 295.89999997615814,
+        "max": 295.89999997615814,
+        "n": 1,
+        "values": [
+          295.9
+        ]
+      },
+      "half": {
+        "median": 295.89999997615814,
+        "p25": 295.89999997615814,
+        "p75": 295.89999997615814,
+        "min": 295.89999997615814,
+        "max": 295.89999997615814,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 246.59375,
+        "p25": 246.59375,
+        "p75": 246.59375,
+        "min": 246.59375,
+        "max": 246.59375,
+        "n": 1,
+        "values": [
+          246.59
+        ]
+      },
+      "retainedMB": {
+        "median": 227.84375,
+        "p25": 227.84375,
+        "p75": 227.84375,
+        "min": 227.84375,
+        "max": 227.84375,
+        "n": 1,
+        "values": [
+          227.84
+        ]
+      },
+      "jsKB": {
+        "median": 4.36328125,
+        "p25": 4.36328125,
+        "p75": 4.36328125,
+        "min": 4.36328125,
+        "max": 4.36328125,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.29000000000000015,
+        "p25": 0.29000000000000015,
+        "p75": 0.29000000000000015,
+        "min": 0.29000000000000015,
+        "max": 0.29000000000000015,
+        "n": 1
+      },
+      "tbt": {
+        "median": 41,
+        "p25": 41,
+        "p75": 41,
+        "min": 41,
+        "max": 41,
+        "n": 1,
+        "values": [
+          41
+        ]
+      },
+      "maxLag": {
+        "median": 83,
+        "p25": 83,
+        "p75": 83,
+        "min": 83,
+        "max": 83,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 14.200000047683716,
+        "p25": 14.200000047683716,
+        "p75": 14.200000047683716,
+        "min": 14.200000047683716,
+        "max": 14.200000047683716,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 14.200000047683716,
+        "p25": 14.200000047683716,
+        "p75": 14.200000047683716,
+        "min": 14.200000047683716,
+        "max": 14.200000047683716,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 46.879576683044434,
+        "p25": 46.879576683044434,
+        "p75": 46.879576683044434,
+        "min": 46.879576683044434,
+        "max": 46.879576683044434,
+        "n": 1
+      },
+      "corr": {
+        "median": 0.9968946166032211,
+        "p25": 0.9968946166032211,
+        "p75": 0.9968946166032211,
+        "min": 0.9968946166032211,
+        "max": 0.9968946166032211,
+        "n": 1
+      },
+      "maxErr": {
+        "median": 0.19687172770500183,
+        "p25": 0.19687172770500183,
+        "p75": 0.19687172770500183,
+        "min": 0.19687172770500183,
+        "max": 0.19687172770500183,
+        "n": 1
+      },
+      "shiftMs": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      }
+    }
+  ],
+  "feed": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "useAudio",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 940.6000000238419,
+        "p25": 940.6000000238419,
+        "p75": 940.6000000238419,
+        "min": 940.6000000238419,
+        "max": 940.6000000238419,
+        "n": 1,
+        "values": [
+          940.6
+        ]
+      },
+      "half": {
+        "median": 940.6000000238419,
+        "p25": 940.6000000238419,
+        "p75": 940.6000000238419,
+        "min": 940.6000000238419,
+        "max": 940.6000000238419,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 585.578125,
+        "p25": 585.578125,
+        "p75": 585.578125,
+        "min": 585.578125,
+        "max": 585.578125,
+        "n": 1,
+        "values": [
+          585.58
+        ]
+      },
+      "retainedMB": {
+        "median": 378.734375,
+        "p25": 378.734375,
+        "p75": 378.734375,
+        "min": 378.734375,
+        "max": 378.734375,
+        "n": 1,
+        "values": [
+          378.73
+        ]
+      },
+      "jsKB": {
+        "median": 117.5771484375,
+        "p25": 117.5771484375,
+        "p75": 117.5771484375,
+        "min": 117.5771484375,
+        "max": 117.5771484375,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 8.809999999999999,
+        "p25": 8.809999999999999,
+        "p75": 8.809999999999999,
+        "min": 8.809999999999999,
+        "max": 8.809999999999999,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 2.1999999284744263,
+        "p25": 2.1999999284744263,
+        "p75": 2.1999999284744263,
+        "min": 2.1999999284744263,
+        "max": 2.1999999284744263,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 13.800000071525574,
+        "p25": 13.800000071525574,
+        "p75": 13.800000071525574,
+        "min": 13.800000071525574,
+        "max": 13.800000071525574,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 13.800000071525574,
+        "p25": 13.800000071525574,
+        "p75": 13.800000071525574,
+        "min": 13.800000071525574,
+        "max": 13.800000071525574,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 17.13029956817627,
+        "p25": 17.13029956817627,
+        "p75": 17.13029956817627,
+        "min": 17.13029956817627,
+        "max": 17.13029956817627,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "decodeAudioData@8kHz",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 696.2999999523163,
+        "p25": 696.2999999523163,
+        "p75": 696.2999999523163,
+        "min": 696.2999999523163,
+        "max": 696.2999999523163,
+        "n": 1,
+        "values": [
+          696.3
+        ]
+      },
+      "half": {
+        "median": 696.2999999523163,
+        "p25": 696.2999999523163,
+        "p75": 696.2999999523163,
+        "min": 696.2999999523163,
+        "max": 696.2999999523163,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 1499.1875,
+        "p25": 1499.1875,
+        "p75": 1499.1875,
+        "min": 1499.1875,
+        "max": 1499.1875,
+        "n": 1,
+        "values": [
+          1499.19
+        ]
+      },
+      "retainedMB": {
+        "median": 1464.78125,
+        "p25": 1464.78125,
+        "p75": 1464.78125,
+        "min": 1464.78125,
+        "max": 1464.78125,
+        "n": 1,
+        "values": [
+          1464.78
+        ]
+      },
+      "jsKB": {
+        "median": 17.4326171875,
+        "p25": 17.4326171875,
+        "p75": 17.4326171875,
+        "min": 17.4326171875,
+        "max": 17.4326171875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 4.47,
+        "p25": 4.47,
+        "p75": 4.47,
+        "min": 4.47,
+        "max": 4.47,
+        "n": 1
+      },
+      "tbt": {
+        "median": 52,
+        "p25": 52,
+        "p75": 52,
+        "min": 52,
+        "max": 52,
+        "n": 1,
+        "values": [
+          52
+        ]
+      },
+      "maxLag": {
+        "median": 147.30000007152557,
+        "p25": 147.30000007152557,
+        "p75": 147.30000007152557,
+        "min": 147.30000007152557,
+        "max": 147.30000007152557,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 63.89999997615814,
+        "p25": 63.89999997615814,
+        "p75": 63.89999997615814,
+        "min": 63.89999997615814,
+        "max": 63.89999997615814,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 63.89999997615814,
+        "p25": 63.89999997615814,
+        "p75": 63.89999997615814,
+        "min": 63.89999997615814,
+        "max": 63.89999997615814,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 255.72091960906982,
+        "p25": 255.72091960906982,
+        "p75": 255.72091960906982,
+        "min": 255.72091960906982,
+        "max": 255.72091960906982,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "ws-peaks",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 138.19999992847443,
+        "p25": 138.19999992847443,
+        "p75": 138.19999992847443,
+        "min": 138.19999992847443,
+        "max": 138.19999992847443,
+        "n": 1,
+        "values": [
+          138.2
+        ]
+      },
+      "half": {
+        "median": 138.19999992847443,
+        "p25": 138.19999992847443,
+        "p75": 138.19999992847443,
+        "min": 138.19999992847443,
+        "max": 138.19999992847443,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 52.375,
+        "p25": 52.375,
+        "p75": 52.375,
+        "min": 52.375,
+        "max": 52.375,
+        "n": 1,
+        "values": [
+          52.38
+        ]
+      },
+      "retainedMB": {
+        "median": 91.625,
+        "p25": 91.625,
+        "p75": 91.625,
+        "min": 91.625,
+        "max": 91.625,
+        "n": 1,
+        "values": [
+          91.63
+        ]
+      },
+      "jsKB": {
+        "median": 17.4326171875,
+        "p25": 17.4326171875,
+        "p75": 17.4326171875,
+        "min": 17.4326171875,
+        "max": 17.4326171875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.22999999999999987,
+        "p25": 0.22999999999999987,
+        "p75": 0.22999999999999987,
+        "min": 0.22999999999999987,
+        "max": 0.22999999999999987,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 2,
+        "p25": 2,
+        "p75": 2,
+        "min": 2,
+        "max": 2,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 7.715426445007324,
+        "p25": 7.715426445007324,
+        "p75": 7.715426445007324,
+        "min": 7.715426445007324,
+        "max": 7.715426445007324,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "peaksjs",
+      "runs": 1,
+      "errors": 0,
+      "method": "precomputed",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 109,
+        "p25": 109,
+        "p75": 109,
+        "min": 109,
+        "max": 109,
+        "n": 1,
+        "values": [
+          109
+        ]
+      },
+      "half": {
+        "median": 109,
+        "p25": 109,
+        "p75": 109,
+        "min": 109,
+        "max": 109,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 142.515625,
+        "p25": 142.515625,
+        "p75": 142.515625,
+        "min": 142.515625,
+        "max": 142.515625,
+        "n": 1,
+        "values": [
+          142.52
+        ]
+      },
+      "retainedMB": {
+        "median": 154.140625,
+        "p25": 154.140625,
+        "p75": 154.140625,
+        "min": 154.140625,
+        "max": 154.140625,
+        "n": 1,
+        "values": [
+          154.14
+        ]
+      },
+      "jsKB": {
+        "median": 62.4716796875,
+        "p25": 62.4716796875,
+        "p75": 62.4716796875,
+        "min": 62.4716796875,
+        "max": 62.4716796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 0.31999999999999995,
+        "p25": 0.31999999999999995,
+        "p75": 0.31999999999999995,
+        "min": 0.31999999999999995,
+        "max": 0.31999999999999995,
+        "n": 1
+      },
+      "tbt": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "maxLag": {
+        "median": 15.300000071525574,
+        "p25": 15.300000071525574,
+        "p75": 15.300000071525574,
+        "min": 15.300000071525574,
+        "max": 15.300000071525574,
+        "n": 1
+      },
+      "inputP95": null,
+      "inputMax": null,
+      "jsHeapMB": {
+        "median": 5.681881904602051,
+        "p25": 5.681881904602051,
+        "p75": 5.681881904602051,
+        "min": 5.681881904602051,
+        "max": 5.681881904602051,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "feed20",
+      "contender": "peaksjs-webaudio",
+      "runs": 1,
+      "errors": 0,
+      "method": "webaudio@48000",
+      "version": "156.0.8078.4",
+      "firstBars": null,
+      "complete": {
+        "median": 990.3000000715256,
+        "p25": 990.3000000715256,
+        "p75": 990.3000000715256,
+        "min": 990.3000000715256,
+        "max": 990.3000000715256,
+        "n": 1,
+        "values": [
+          990.3
+        ]
+      },
+      "half": {
+        "median": 990.3000000715256,
+        "p25": 990.3000000715256,
+        "p75": 990.3000000715256,
+        "min": 990.3000000715256,
+        "max": 990.3000000715256,
+        "n": 1
+      },
+      "peakMemoryMB": {
+        "median": 2369.21875,
+        "p25": 2369.21875,
+        "p75": 2369.21875,
+        "min": 2369.21875,
+        "max": 2369.21875,
+        "n": 1,
+        "values": [
+          2369.22
+        ]
+      },
+      "retainedMB": {
+        "median": 1211.3125,
+        "p25": 1211.3125,
+        "p75": 1211.3125,
+        "min": 1211.3125,
+        "max": 1211.3125,
+        "n": 1,
+        "values": [
+          1211.31
+        ]
+      },
+      "jsKB": {
+        "median": 62.4716796875,
+        "p25": 62.4716796875,
+        "p75": 62.4716796875,
+        "min": 62.4716796875,
+        "max": 62.4716796875,
+        "n": 1
+      },
+      "cpuSec": {
+        "median": 7.44,
+        "p25": 7.44,
+        "p75": 7.44,
+        "min": 7.44,
+        "max": 7.44,
+        "n": 1
+      },
+      "tbt": {
+        "median": 57,
+        "p25": 57,
+        "p75": 57,
+        "min": 57,
+        "max": 57,
+        "n": 1,
+        "values": [
+          57
+        ]
+      },
+      "maxLag": {
+        "median": 100.70000004768372,
+        "p25": 100.70000004768372,
+        "p75": 100.70000004768372,
+        "min": 100.70000004768372,
+        "max": 100.70000004768372,
+        "n": 1
+      },
+      "inputP95": {
+        "median": 13.300000071525574,
+        "p25": 13.300000071525574,
+        "p75": 13.300000071525574,
+        "min": 13.300000071525574,
+        "max": 13.300000071525574,
+        "n": 1
+      },
+      "inputMax": {
+        "median": 13.300000071525574,
+        "p25": 13.300000071525574,
+        "p75": 13.300000071525574,
+        "min": 13.300000071525574,
+        "max": 13.300000071525574,
+        "n": 1
+      },
+      "jsHeapMB": {
+        "median": 5.128687858581543,
+        "p25": 5.128687858581543,
+        "p75": 5.128687858581543,
+        "min": 5.128687858581543,
+        "max": 5.128687858581543,
+        "n": 1
+      },
+      "corr": null,
+      "maxErr": null,
+      "shiftMs": null
+    }
+  ],
+  "runtime": [
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@1x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 33.05308809998342,
+        "p25": 33.05308809998342,
+        "p75": 33.05308809998342,
+        "min": 33.05308809998342,
+        "max": 33.05308809998342,
+        "n": 1,
+        "values": [
+          33.05
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 5.261112028134984,
+        "p25": 5.261112028134984,
+        "p75": 5.261112028134984,
+        "min": 5.261112028134984,
+        "max": 5.261112028134984,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 6.833050170898283,
+        "p25": 6.833050170898283,
+        "p75": 6.833050170898283,
+        "min": 6.833050170898283,
+        "max": 6.833050170898283,
+        "n": 1
+      },
+      "fps": {
+        "median": 60.01322536793108,
+        "p25": 60.01322536793108,
+        "p75": 60.01322536793108,
+        "min": 60.01322536793108,
+        "max": 60.01322536793108,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.799999999999272,
+        "p25": 16.799999999999272,
+        "p75": 16.799999999999272,
+        "min": 16.799999999999272,
+        "max": 16.799999999999272,
+        "n": 1,
+        "values": [
+          16.8
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": {
+        "median": 7.857395,
+        "p25": 7.857395,
+        "p75": 7.857395,
+        "min": 7.857395,
+        "max": 7.857395,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@1x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 50.53575659639215,
+        "p25": 50.53575659639215,
+        "p75": 50.53575659639215,
+        "min": 50.53575659639215,
+        "max": 50.53575659639215,
+        "n": 1,
+        "values": [
+          50.54
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 6.7023949908441445,
+        "p25": 6.7023949908441445,
+        "p75": 6.7023949908441445,
+        "min": 6.7023949908441445,
+        "max": 6.7023949908441445,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 6.163815243472088,
+        "p25": 6.163815243472088,
+        "p75": 6.163815243472088,
+        "min": 6.163815243472088,
+        "max": 6.163815243472088,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 6.902695304203758,
+        "p25": 6.902695304203758,
+        "p75": 6.902695304203758,
+        "min": 6.902695304203758,
+        "max": 6.902695304203758,
+        "n": 1
+      },
+      "fps": {
+        "median": 59.99750530123488,
+        "p25": 59.99750530123488,
+        "p75": 59.99750530123488,
+        "min": 59.99750530123488,
+        "max": 59.99750530123488,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": {
+        "median": 7.859455,
+        "p25": 7.859455,
+        "p75": 7.859455,
+        "min": 7.859455,
+        "max": 7.859455,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@4x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.05668552004197,
+        "p25": 60.05668552004197,
+        "p75": 60.05668552004197,
+        "min": 60.05668552004197,
+        "max": 60.05668552004197,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": {
+        "median": 7.87784,
+        "p25": 7.87784,
+        "p75": 7.87784,
+        "min": 7.87784,
+        "max": 7.87784,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@4x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.01771832795219,
+        "p25": 60.01771832795219,
+        "p75": 60.01771832795219,
+        "min": 60.01771832795219,
+        "max": 60.01771832795219,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.799999999999272,
+        "p25": 16.799999999999272,
+        "p75": 16.799999999999272,
+        "min": 16.799999999999272,
+        "max": 16.799999999999272,
+        "n": 1,
+        "values": [
+          16.8
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": {
+        "median": 7.878794,
+        "p25": 7.878794,
+        "p75": 7.878794,
+        "min": 7.878794,
+        "max": 7.878794,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@8x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.02745538499938,
+        "p25": 60.02745538499938,
+        "p75": 60.02745538499938,
+        "min": 60.02745538499938,
+        "max": 60.02745538499938,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": {
+        "median": 7.876779,
+        "p25": 7.876779,
+        "p75": 7.876779,
+        "min": 7.876779,
+        "max": 7.876779,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 8
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "playback@8x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 59.968516528465116,
+        "p25": 59.968516528465116,
+        "p75": 59.968516528465116,
+        "min": 59.968516528465116,
+        "max": 59.968516528465116,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.799999999999272,
+        "p25": 16.799999999999272,
+        "p75": 16.799999999999272,
+        "min": 16.799999999999272,
+        "max": 16.799999999999272,
+        "n": 1,
+        "values": [
+          16.8
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": {
+        "median": 7.871756,
+        "p25": 7.871756,
+        "p75": 7.871756,
+        "min": 7.871756,
+        "max": 7.871756,
+        "n": 1
+      },
+      "scenario": "playback",
+      "throttle": 8
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@1x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 68.55251765104984,
+        "p25": 68.55251765104984,
+        "p75": 68.55251765104984,
+        "min": 68.55251765104984,
+        "max": 68.55251765104984,
+        "n": 1,
+        "values": [
+          68.55
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 29.320005487370427,
+        "p25": 29.320005487370427,
+        "p75": 29.320005487370427,
+        "min": 29.320005487370427,
+        "max": 29.320005487370427,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 8.312720763265617,
+        "p25": 8.312720763265617,
+        "p75": 8.312720763265617,
+        "min": 8.312720763265617,
+        "max": 8.312720763265617,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 2.9154871933266007,
+        "p25": 2.9154871933266007,
+        "p75": 2.9154871933266007,
+        "min": 2.9154871933266007,
+        "max": 2.9154871933266007,
+        "n": 1
+      },
+      "fps": {
+        "median": 60.06868560724321,
+        "p25": 60.06868560724321,
+        "p75": 60.06868560724321,
+        "min": 60.06868560724321,
+        "max": 60.06868560724321,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.799999999999272,
+        "p25": 16.799999999999272,
+        "p75": 16.799999999999272,
+        "min": 16.799999999999272,
+        "max": 16.799999999999272,
+        "n": 1,
+        "values": [
+          16.8
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 482,
+        "p25": 482,
+        "p75": 482,
+        "min": 482,
+        "max": 482,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@1x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 328.16669483987033,
+        "p25": 328.16669483987033,
+        "p75": 328.16669483987033,
+        "min": 328.16669483987033,
+        "max": 328.16669483987033,
+        "n": 1,
+        "values": [
+          328.17
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 228.52756911736782,
+        "p25": 228.52756911736782,
+        "p75": 228.52756911736782,
+        "min": 228.52756911736782,
+        "max": 228.52756911736782,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 11.83856131013559,
+        "p25": 11.83856131013559,
+        "p75": 11.83856131013559,
+        "min": 11.83856131013559,
+        "max": 11.83856131013559,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 8.79931819614324,
+        "p25": 8.79931819614324,
+        "p75": 8.79931819614324,
+        "min": 8.79931819614324,
+        "max": 8.79931819614324,
+        "n": 1
+      },
+      "fps": {
+        "median": 60.00199590767399,
+        "p25": 60.00199590767399,
+        "p75": 60.00199590767399,
+        "min": 60.00199590767399,
+        "max": 60.00199590767399,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 482,
+        "p25": 482,
+        "p75": 482,
+        "min": 482,
+        "max": 482,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@4x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.009481747814306,
+        "p25": 60.009481747814306,
+        "p75": 60.009481747814306,
+        "min": 60.009481747814306,
+        "max": 60.009481747814306,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 481,
+        "p25": 481,
+        "p75": 481,
+        "min": 481,
+        "max": 481,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@4x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 59.695912263210374,
+        "p25": 59.695912263210374,
+        "p75": 59.695912263210374,
+        "min": 59.695912263210374,
+        "max": 59.695912263210374,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0.0041753653444676405,
+        "p25": 0.0041753653444676405,
+        "p75": 0.0041753653444676405,
+        "min": 0.0041753653444676405,
+        "max": 0.0041753653444676405,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 480,
+        "p25": 480,
+        "p75": 480,
+        "min": 480,
+        "max": 480,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@8x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.09420172143867,
+        "p25": 60.09420172143867,
+        "p75": 60.09420172143867,
+        "min": 60.09420172143867,
+        "max": 60.09420172143867,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 482,
+        "p25": 482,
+        "p75": 482,
+        "min": 482,
+        "max": 482,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 8
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "zoom@8x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 48.01548406321974,
+        "p25": 48.01548406321974,
+        "p75": 48.01548406321974,
+        "min": 48.01548406321974,
+        "max": 48.01548406321974,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 33.40000000000009,
+        "p25": 33.40000000000009,
+        "p75": 33.40000000000009,
+        "min": 33.40000000000009,
+        "max": 33.40000000000009,
+        "n": 1,
+        "values": [
+          33.4
+        ]
+      },
+      "frameP99": {
+        "median": 50,
+        "p25": 50,
+        "p75": 50,
+        "min": 50,
+        "max": 50,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0.2248062015503876,
+        "p25": 0.2248062015503876,
+        "p75": 0.2248062015503876,
+        "min": 0.2248062015503876,
+        "max": 0.2248062015503876,
+        "n": 1,
+        "values": [
+          0.22
+        ]
+      },
+      "redraws": {
+        "median": 388,
+        "p25": 388,
+        "p75": 388,
+        "min": 388,
+        "max": 388,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "zoom",
+      "throttle": 8
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@1x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 73.16554059398757,
+        "p25": 73.16554059398757,
+        "p75": 73.16554059398757,
+        "min": 73.16554059398757,
+        "max": 73.16554059398757,
+        "n": 1,
+        "values": [
+          73.17
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 21.812473668824822,
+        "p25": 21.812473668824822,
+        "p75": 21.812473668824822,
+        "min": 21.812473668824822,
+        "max": 21.812473668824822,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 10.780844789222584,
+        "p25": 10.780844789222584,
+        "p75": 10.780844789222584,
+        "min": 10.780844789222584,
+        "max": 10.780844789222584,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 4.804718585720639,
+        "p25": 4.804718585720639,
+        "p75": 4.804718585720639,
+        "min": 4.804718585720639,
+        "max": 4.804718585720639,
+        "n": 1
+      },
+      "fps": {
+        "median": 60.07618809717104,
+        "p25": 60.07618809717104,
+        "p75": 60.07618809717104,
+        "min": 60.07618809717104,
+        "max": 60.07618809717104,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 457,
+        "p25": 457,
+        "p75": 457,
+        "min": 457,
+        "max": 457,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "resize",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@1x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": {
+        "median": 37.96316820054195,
+        "p25": 37.96316820054195,
+        "p75": 37.96316820054195,
+        "min": 37.96316820054195,
+        "max": 37.96316820054195,
+        "n": 1,
+        "values": [
+          37.96
+        ]
+      },
+      "scriptMsPerSec": {
+        "median": 5.509069415307937,
+        "p25": 5.509069415307937,
+        "p75": 5.509069415307937,
+        "min": 5.509069415307937,
+        "max": 5.509069415307937,
+        "n": 1
+      },
+      "layoutMsPerSec": {
+        "median": 6.4709506138258295,
+        "p25": 6.4709506138258295,
+        "p75": 6.4709506138258295,
+        "min": 6.4709506138258295,
+        "max": 6.4709506138258295,
+        "n": 1
+      },
+      "styleMsPerSec": {
+        "median": 2.6512575970047467,
+        "p25": 2.6512575970047467,
+        "p75": 2.6512575970047467,
+        "min": 2.6512575970047467,
+        "max": 2.6512575970047467,
+        "n": 1
+      },
+      "fps": {
+        "median": 60.094201722333686,
+        "p25": 60.094201722333686,
+        "p75": 60.094201722333686,
+        "min": 60.094201722333686,
+        "max": 60.094201722333686,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "resize",
+      "throttle": 1
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@4x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.06943577208984,
+        "p25": 60.06943577208984,
+        "p75": 60.06943577208984,
+        "min": 60.06943577208984,
+        "max": 60.06943577208984,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 457,
+        "p25": 457,
+        "p75": 457,
+        "min": 457,
+        "max": 457,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "resize",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@4x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.04394068043929,
+        "p25": 60.04394068043929,
+        "p75": 60.04394068043929,
+        "min": 60.04394068043929,
+        "max": 60.04394068043929,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "resize",
+      "throttle": 4
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@8x",
+      "contender": "sillon",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.04993757802747,
+        "p25": 60.04993757802747,
+        "p75": 60.04993757802747,
+        "min": 60.04993757802747,
+        "max": 60.04993757802747,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.799999999999272,
+        "p25": 16.799999999999272,
+        "p75": 16.799999999999272,
+        "min": 16.799999999999272,
+        "max": 16.799999999999272,
+        "n": 1,
+        "values": [
+          16.8
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 457,
+        "p25": 457,
+        "p75": 457,
+        "min": 457,
+        "max": 457,
+        "n": 1
+      },
+      "commits": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "played": null,
+      "scenario": "resize",
+      "throttle": 8
+    },
+    {
+      "browser": "chromium",
+      "net": "local",
+      "file": "resize@8x",
+      "contender": "ws",
+      "runs": 1,
+      "errors": 0,
+      "method": "",
+      "version": "156.0.8078.4",
+      "mainMsPerSec": null,
+      "scriptMsPerSec": null,
+      "layoutMsPerSec": null,
+      "styleMsPerSec": null,
+      "fps": {
+        "median": 60.0259571703112,
+        "p25": 60.0259571703112,
+        "p75": 60.0259571703112,
+        "min": 60.0259571703112,
+        "max": 60.0259571703112,
+        "n": 1
+      },
+      "frameP50": {
+        "median": 16.699999999999818,
+        "p25": 16.699999999999818,
+        "p75": 16.699999999999818,
+        "min": 16.699999999999818,
+        "max": 16.699999999999818,
+        "n": 1
+      },
+      "frameP95": {
+        "median": 16.700000000000728,
+        "p25": 16.700000000000728,
+        "p75": 16.700000000000728,
+        "min": 16.700000000000728,
+        "max": 16.700000000000728,
+        "n": 1,
+        "values": [
+          16.7
+        ]
+      },
+      "frameP99": {
+        "median": 16.800000000000182,
+        "p25": 16.800000000000182,
+        "p75": 16.800000000000182,
+        "min": 16.800000000000182,
+        "max": 16.800000000000182,
+        "n": 1
+      },
+      "slowFrames": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1,
+        "values": [
+          0
+        ]
+      },
+      "redraws": {
+        "median": 0,
+        "p25": 0,
+        "p75": 0,
+        "min": 0,
+        "max": 0,
+        "n": 1
+      },
+      "commits": null,
+      "played": null,
+      "scenario": "resize",
+      "throttle": 8
+    }
+  ]
+}
