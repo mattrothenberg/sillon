@@ -68,7 +68,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is organized, the rules 
 
 ## Deploying the site
 
-The site is a static Cloudflare Worker (`apps/site/wrangler.jsonc`): the built files, served at [sillon.mattrothenberg.com](https://sillon.mattrothenberg.com) with the security headers in `apps/site/public/_headers`, and no workers.dev or preview URLs.
+The site is a Cloudflare Worker (`apps/site/wrangler.jsonc`) serving the built files at [sillon.mattrothenberg.com](https://sillon.mattrothenberg.com), with the security headers in `apps/site/public/_headers` and no workers.dev or preview URLs. Static assets don't answer byte ranges, which audio needs to start playing and to seek, so a small script (`apps/site/worker/index.js`) serves `/audio/*` with them.
 
 ```sh
 pnpm --filter @sillon/site preview   # build, then serve it locally with wrangler

@@ -1,12 +1,16 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  // The site: static assets only, no Worker code.
+  // The site: static assets, plus a small script for /audio/* that answers byte
+  // ranges, which audio needs to start playing and to seek (worker/index.js).
   "name": "sillon-site",
+  "main": "worker/index.js",
   "account_id": "a91c4ce97401e1568c64669c9c96ac95",
   "compatibility_date": "2026-10-01",
   "assets": {
     "directory": "./dist",
-    "not_found_handling": "404-page"
+    "not_found_handling": "404-page",
+    "binding": "ASSETS",
+    "run_worker_first": ["/audio/*"]
   },
   // One canonical address: no workers.dev URL and no preview URLs.
   "routes": [{ "pattern": "sillon.mattrothenberg.com", "custom_domain": true }],
