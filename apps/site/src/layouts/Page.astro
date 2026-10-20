@@ -1,0 +1,100 @@
+---
+import '../global.css'
+import { markSvg } from '../lib/mark'
+import { meta, tip } from '../cls'
+import { DevMusic } from '../islands/DevMusic'
+
+interface Props { title: string; description: string; page: 'home' | 'why' }
+const { title, description, page } = Astro.props
+
+const wordmarkTip = `${tip} pointer-events-none absolute top-[calc(100%+12px)] left-0 z-30 w-max scale-96 opacity-0 origin-top-left
+  group-hover:scale-100 group-hover:opacity-100 group-hover:delay-250 group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:delay-250`
+const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[current=page]:text-ink narrow:text-[14px]'
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <script is:inline>
+      // Apply a saved theme before first paint, so the page never flashes the wrong one.
+      try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t } catch {}
+    </script>
+    {import.meta.env.DEV && <script is:inline>
+      // Another version of the song is playing (dev only): hide the build-time bars, which are the piano's.
+      try { const m = localStorage.getItem('music'); if (m && m !== 'avril') document.documentElement.dataset.music = m } catch {}
+    </script>}
+    <slot name="head" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preload" href="/fonts/InstrumentSans.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/SchibstedGrotesk-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/PaperMono.woff2" as="font" type="font/woff2" crossorigin />
+  </head>
+  <body id="top">
+    <header class="flex items-center justify-between gap-4 px-8 py-[22px] narrow:px-(--gutter)">
+      <a class="group relative inline-flex items-center gap-2.5 text-ink no-underline [&>svg]:flex-none" href="/" aria-describedby="wordmark-tip">
+        <Fragment set:html={markSvg('mark-nav', 24)} />
+        <span class="font-display text-[23px]/none font-semibold tracking-[-0.02em]">sillon</span>
+        {/* The wordmark's tooltip, in CSS alone: the word, how to say it, and what it means. */}
+        <span class={wordmarkTip} id="wordmark-tip" role="tooltip">
+          <span class="[&_b]:font-semibold [&_b]:text-ink"><b lang="fr">sillon</b> <span class={`${meta} ml-1`}>/si.jɔ̃/</span></span>
+          French for the groove cut into a record.
+        </span>
+      </a>
+      <div class="flex items-center gap-5">
+        <nav class="flex gap-[22px] narrow:gap-3.5" aria-label="Pages">
+          <a class={navLink} href="/" aria-current={page === 'home' ? 'page' : undefined}>Components</a>
+          <a class={navLink} href="/why" aria-current={page === 'why' ? 'page' : undefined}>Why sillon</a>
+        </nav>
+        <button
+          class="-my-2 -mr-2 grid size-9 flex-none cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-ink-2 hover:bg-plate hover:text-ink"
+          id="theme-toggle"
+          type="button"
+        >
+          {/* The icon follows the theme in CSS alone, so it's right before any script runs: a moon in light, a sun in dark. */}
+          <svg class="hidden dark:block" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="3.5" /><path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.3 4.3l1.1 1.1M14.6 14.6l1.1 1.1M4.3 15.7l1.1-1.1M14.6 5.4l1.1-1.1" /></g></svg>
+          <svg class="dark:hidden" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <slot />
+
+    {import.meta.env.DEV && <DevMusic client:only="react" />}
+
+    <script>
+      // Focus rings once someone moves focus with Tab; hidden again on the next click.
+      addEventListener('keydown', (e) => { if (e.key === 'Tab') document.documentElement.dataset.keyboard = '' })
+      addEventListener('pointerdown', () => { delete document.documentElement.dataset.keyboard })
+
+      // Theme: starts on the system's, one click flips to the other, saved per browser.
+      const toggle = document.getElementById('theme-toggle')!
+      const root = document.documentElement
+      const isDark = () => root.dataset.theme === 'dark' || (root.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+      const sync = () => {
+        const dark = isDark()
+        toggle.toggleAttribute('data-dark', dark)
+        toggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme')
+        toggle.title = dark ? 'Light' : 'Dark'
+      }
+      toggle.addEventListener('click', () => {
+        const t = isDark() ? 'light' : 'dark'
+        root.dataset.theme = t
+        try { localStorage.setItem('theme', t) } catch {}
+        sync()
+      })
+      sync()
+
+      // Copy buttons.
+      document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) => b.addEventListener('click', () => {
+        navigator.clipboard?.writeText(b.dataset.copy!).then(() => {
+          b.textContent = 'Copied'
+          setTimeout(() => { b.textContent = 'Copy' }, 1600)
+        }, () => {})
+      }))
+    </script>
+  </body>
+</html>

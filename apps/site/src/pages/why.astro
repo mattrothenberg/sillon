@@ -1,0 +1,128 @@
+---
+import Page from '../layouts/Page.astro'
+import { highlight } from '../lib/highlight'
+import { BUCKET, MB, mp3Facts, pcmBytes, peaksBytes } from '../lib/facts'
+import { MUSIC, MUSIC_TITLE } from '../music'
+import { HowStencil } from '../islands/HowStencil'
+import { HowFrame } from '../islands/HowFrame'
+import { WS_STYLE, SILLON_STYLE, WS_REACT, SILLON_REACT } from '../why-snippets'
+import { col, meta, chapterN, lede, ledeTitle, ledeText, pageEnd, section } from '../cls'
+
+const int = (x: number) => Math.round(x).toLocaleString('en-US')
+const size = (bytes: number) => (bytes >= 10 * MB ? `${Math.round(bytes / MB)} MB` : bytes >= MB ? `${(bytes / MB).toFixed(1)} MB` : `${Math.round(bytes / 1024)} kB`)
+
+// What each library keeps once this site's song is loaded, by arithmetic.
+const song = mp3Facts(MUSIC)
+const squares = [
+  { label: 'The MP3 itself', bytes: song.bytes },
+  { label: 'What wavesurfer.js keeps: the audio, decoded at 8 kHz', bytes: pcmBytes(song.duration, 8000, song.channels) },
+  { label: 'What sillon keeps: its peaks', bytes: peaksBytes(song.samples).bytes },
+]
+const biggest = Math.max(...squares.map((s) => s.bytes))
+
+// Sections after the first sit below a rule. The rail's own rule divides the first from the hero.
+const docP = 'mt-6 max-w-text text-ink-2'
+// Two approaches, one above the other.
+const versus = 'mt-10 grid grid-cols-[minmax(0,1fr)] gap-5 [&_pre]:text-[13px]'
+const versusWho = `${meta} mb-2 block`
+const tradeoff = 'border-t border-rule py-3.5 text-ink-2 first:border-t-0 first:pt-0'
+---
+<Page title="Why sillon" description="Why we built a waveform library when wavesurfer.js exists, and where wavesurfer.js is still the better choice." page="why">
+  <script is:inline slot="head">
+    // Counts React commits per root, so the playback demo can show how often its waveform renders.
+    // Installed before React loads; if React DevTools is already here, its hook is wrapped instead.
+    (() => {
+      const counts = (window.__commits = new Map())
+      const count = (root) => counts.set(root.containerInfo, (counts.get(root.containerInfo) ?? 0) + 1)
+      const hook = window.__REACT_DEVTOOLS_GLOBAL_HOOK__
+      if (hook) {
+        const prev = hook.onCommitFiberRoot
+        hook.onCommitFiberRoot = function (id, root, ...rest) { count(root); return prev?.call(this, id, root, ...rest) }
+      } else {
+        window.__REACT_DEVTOOLS_GLOBAL_HOOK__ = {
+          supportsFiber: true, renderers: new Map(), inject: () => 1, checkDCE() {},
+          onCommitFiberRoot: (id, root) => count(root), onCommitFiberUnmount() {}, onPostCommitFiberRoot() {}, setStrictMode() {},
+        }
+      }
+    })()
+  </script>
+
+  <section class={`${col} pt-[72px] narrow:pt-12`} aria-labelledby="doc-title">
+    <h1 id="doc-title" class="text-[40px]/[1.12] font-semibold tracking-[-0.02em] text-balance narrow:text-[32px]">Why sillon</h1>
+    <p class="mt-5 max-w-text text-[19px]/[1.55] text-ink-2 narrow:text-[17px]">
+      wavesurfer.js is the standard way to show audio on the web, and it's good at it. We built sillon because of what we
+      kept running into when using it in React apps: styling it, putting our own components on it, and what it holds on to.
+    </p>
+  </section>
+
+  <main class={`${col} ${pageEnd} [&_code]:text-ink`}>
+    <section id="styling" class="mt-[72px] scroll-mt-[76px]">
+      <div class={lede}>
+        <span class={chapterN}>01</span>
+        <h2 class={ledeTitle}>Styling it with CSS</h2>
+        <p class={ledeText}>wavesurfer.js paints its bars onto a canvas, so their look comes from options you pass in JavaScript. In sillon the bars are a stencil, and whatever sits behind them shows through. The look is plain CSS.</p>
+      </div>
+      <HowStencil client:only="react"><div slot="fallback" class="h-[140px]" aria-hidden="true"></div></HowStencil>
+      <div class={versus}>
+        <div><span class={versusWho}>wavesurfer.js</span><div data-code set:html={highlight(WS_STYLE, 'javascript')} /></div>
+        <div><span class={versusWho}>sillon</span><div data-code set:html={highlight(SILLON_STYLE, 'tsx')} /></div>
+      </div>
+    </section>
+
+    <section id="react" class={section}>
+      <div class={lede}>
+        <span class={chapterN}>02</span>
+        <h2 class={ledeTitle}>Your components on the waveform</h2>
+        <p class={ledeText}><code>@wavesurfer/react</code> wraps wavesurfer.js in a hook, but the waveform still lives outside React: markers and regions come from plugins, which build their own elements. In sillon every part is a component, so a comment pin is the avatar component you already have.</p>
+      </div>
+      <div class={versus}>
+        <div><span class={versusWho}>wavesurfer.js with @wavesurfer/react</span><div data-code set:html={highlight(WS_REACT, 'tsx')} /></div>
+        <div><span class={versusWho}>sillon</span><div data-code set:html={highlight(SILLON_REACT, 'tsx')} /></div>
+      </div>
+      <p class={docP}>Being components doesn't mean re-rendering. While audio plays, React doesn't render at all: each frame, sillon moves the played part and the playhead with a CSS transform. Press play and watch.</p>
+      <HowFrame client:only="react"><div slot="fallback" class="h-[540px]" aria-hidden="true"></div></HowFrame>
+    </section>
+
+    <section id="peaks" class={section}>
+      <div class={lede}>
+        <span class={chapterN}>03</span>
+        <h2 class={ledeTitle}>It keeps peaks, not audio</h2>
+        <p class={ledeText}>
+          wavesurfer.js keeps the decoded audio and draws from it. sillon keeps only what it draws: the loudest sample in every {BUCKET},
+          plus coarser copies for zooming out, and lets the audio go. Here is what each holds for this site's {Math.round(song.duration / 60)}-minute song, drawn to scale.
+        </p>
+      </div>
+      {/* Squares whose areas are byte counts. */}
+      <figure class="[--big:300px] narrow:[--big:160px]">
+        <div class="grid grid-cols-[repeat(4,auto)] justify-start gap-x-8 gap-y-3.5 narrow:grid-cols-[auto_minmax(0,1fr)] narrow:gap-x-4 narrow:gap-y-5">
+          {squares.map((s) => (
+            <div class="group contents">
+              <div class="row-1 aspect-square w-[max(3px,calc(var(--side)*var(--big)))] self-end rounded-[3px] bg-rival group-last:bg-accent narrow:row-auto narrow:self-start narrow:justify-self-end" style={`--side: ${Math.sqrt(s.bytes / biggest).toFixed(4)}`}></div>
+              <div class="row-2 grid min-w-[120px] max-w-[160px] content-start gap-0.5 narrow:row-auto">
+                <b class="text-[20px] font-medium tabular-nums">{size(s.bytes)}</b>
+                <span class="text-[14px]/[1.4] text-ink-2">{s.label}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <figcaption class={`${meta} mt-6 max-w-text`}>
+          Area is bytes. {MUSIC_TITLE}, {int(song.duration)} s, {song.channels} channels. Decoded audio is seconds × samples per second × channels × 4 bytes.
+        </figcaption>
+      </figure>
+      <p class={docP}>A page with many waveforms on it, like a feed of tracks or a chat full of voice notes, holds peaks for each of them instead of audio. Zooming reads a few stored values per bar instead of going back to the samples.</p>
+    </section>
+
+    <section id="tradeoffs" class={section}>
+      <div class={lede}>
+        <span class={chapterN}>04</span>
+        <h2 class={ledeTitle}>Where wavesurfer.js is better</h2>
+        <p class={ledeText}>If none of the above gets in your way, wavesurfer.js is the safer choice.</p>
+      </div>
+      <ul class="mb-10 grid max-w-text [&_b]:font-semibold [&_b]:text-ink">
+        <li class={tradeoff}><b>It does more.</b> Plugins for spectrograms, recording, a timeline, a minimap and volume envelopes. sillon has none of these yet.</li>
+        <li class={tradeoff}><b>It works anywhere.</b> No framework needed. sillon is React only.</li>
+        <li class={tradeoff}><b>It has been around.</b> Years of use in production, and a large community. sillon is new.</li>
+      </ul>
+    </section>
+  </main>
+</Page>

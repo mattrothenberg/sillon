@@ -10,3 +10,4 @@ apps/bench/public/audio/bench/
 apps/bench/public/truth/
 apps/bench/public/peaks-ws/
 apps/bench/public/peaks-dat/
+.astro

@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Waveform, formatTime, usePeaks, useWaveformStore } from '@sillon/react'
-import { CodeTabs, Seg } from '../ui'
+import { Seg } from '../ui'
+import { ZOOM_TRACK } from '../snippets'
+import { meta, shape, skeleton } from '../cls'
 
-const HOUR = '/audio/hour.mp3'
+// Peaks made ahead of time (scripts/peaks.mjs), a small fraction of the audio's size.
+const HOUR = '/audio/hour.peaks'
 
 const SPANS = [
   { value: '3600', label: '1 h' },
@@ -12,25 +15,9 @@ const SPANS = [
 ] as const
 type Span = (typeof SPANS)[number]['value'] | ''
 
-const MIN_SPAN = 2
+// The file holds one value per 512 samples (12 ms), about two per bar at five seconds.
+const MIN_SPAN = 5
 
-const JSX = `import { Waveform, useAudio, useWaveformStore } from '@sillon/react'
-
-export function Zoomable() {
-  const { peaks } = useAudio('/hour.mp3')
-  const store = useWaveformStore()
-
-  // Show one minute, from 12:00. Cheap enough to call on every frame of a gesture.
-  const zoomIn = () => store.setView(720, 780)
-
-  return (
-    <Waveform.Root store={store} peaks={peaks} onDoubleClick={zoomIn}>
-      <Waveform.Shape>
-        <Waveform.Track className="track" />
-      </Waveform.Shape>
-    </Waveform.Root>
-  )
-}`
 const ease = (t: number) => 1 - Math.pow(1 - t, 4)
 const fmtSpan = (s: number) => (s >= 120 ? formatTime(s) : `${s.toFixed(s < 10 ? 1 : 0)} s`)
 
@@ -123,41 +110,30 @@ export function Zoom() {
   })
 
   return (
-    <section id="zoom">
-      <div className="lede">
-        <h2>Long files</h2>
-        <p>An hour-long recording. Pinch or scroll sideways to zoom, drag to pan. <code>store.setView(start, end)</code> sets the visible range.</p>
-      </div>
-      <div className="wide">
-        <div className="plate">
-          <div className="plate-head">
+    <div>
+          <div className="mb-8 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
             <Seg label="Visible span" value={active} onChange={(v) => { setActive(v); if (v) animateTo(Number(v)) }} options={SPANS} />
-            <span className="meta zoom-readout">
+            <span className={`${meta} flex flex-wrap gap-x-5 gap-y-1`}>
               <span><b ref={out.span} /></span>
             </span>
           </div>
-          <div ref={stage} className="zoom-stage" {...pointer(false)}>
+          <div ref={stage} className="cursor-grab touch-pan-y active:cursor-grabbing [&_[data-sillon]]:cursor-[inherit]" {...pointer(false)}>
             <Waveform.Root store={store} peaks={peaks} barWidth={2} barGap={1} barRadius={1} interactive={false} style={{ height: 160 }}>
-              <Waveform.Skeleton className="skeleton" />
-              <Waveform.Shape>
-                <Waveform.Track style={{ background: 'var(--ink)' }} />
+              <Waveform.Skeleton className={skeleton} />
+              <Waveform.Shape className={shape}>
+                <Waveform.Track className={ZOOM_TRACK} />
               </Waveform.Shape>
             </Waveform.Root>
           </div>
-          <div className="overview" {...pointer(true)}>
+          <div className="relative mt-6 cursor-pointer touch-none [&_[data-sillon]]:cursor-[inherit]" {...pointer(true)}>
             <Waveform.Root peaks={peaks} barWidth={1} barGap={1} interactive={false} style={{ height: 32 }}>
-              <Waveform.Skeleton className="skeleton" />
-              <Waveform.Shape>
-                <Waveform.Track style={{ background: 'var(--track)' }} />
+              <Waveform.Skeleton className={skeleton} />
+              <Waveform.Shape className={shape}>
+                <Waveform.Track className="bg-track" />
               </Waveform.Shape>
             </Waveform.Root>
-            <div ref={windowEl} className="overview-window" />
+            <div ref={windowEl} className="pointer-events-none absolute -inset-y-1 left-0 w-full rounded-md bg-accent/14 shadow-[inset_0_0_0_1.5px_var(--color-accent)]" />
           </div>
-        </div>
-        <div className="demo-code">
-          <CodeTabs tabs={[{ label: 'JSX', lang: 'tsx', code: JSX }]} />
-        </div>
-      </div>
-    </section>
+    </div>
   )
 }

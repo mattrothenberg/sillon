@@ -1,0 +1,115 @@
+@import 'tailwindcss';
+
+/* Instrument Sans and Schibsted Grotesk (OFL), self-hosted from Google Fonts' Latin subsets. */
+@font-face { font-family: 'Instrument Sans'; src: url('/fonts/InstrumentSans.woff2') format('woff2'); font-weight: 400 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Instrument Sans'; src: url('/fonts/InstrumentSans-Italic.woff2') format('woff2'); font-weight: 400 700; font-style: italic; font-display: swap; }
+@font-face { font-family: 'Schibsted Grotesk'; src: url('/fonts/SchibstedGrotesk-SemiBold.woff2') format('woff2'); font-weight: 600; font-style: normal; font-display: swap; }
+/* Arial resized to each font's measurements, so text set in it takes the same room
+   and nothing moves when the real font arrives. Widths measured on the site's own copy. */
+@font-face { font-family: 'Instrument Sans Fallback'; src: local('Arial'), local('ArialMT'); font-weight: 400 500; size-adjust: 100.3%; ascent-override: 96.71%; descent-override: 24.93%; line-gap-override: 0%; }
+@font-face { font-family: 'Instrument Sans Fallback'; src: local('Arial Bold'), local('Arial-BoldMT'); font-weight: 600 700; size-adjust: 98%; ascent-override: 98.98%; descent-override: 25.51%; line-gap-override: 0%; }
+@font-face { font-family: 'Schibsted Grotesk Fallback'; src: local('Arial Bold'), local('Arial-BoldMT'); font-weight: 600; size-adjust: 99.7%; ascent-override: 97.95%; descent-override: 25.86%; line-gap-override: 0%; }
+/* Paper Mono (OFL), self-hosted, as on Formulaire's site. */
+@font-face { font-family: 'Paper Mono'; src: url('/fonts/PaperMono.woff2') format('woff2'); font-weight: 100 800; font-style: normal; font-display: swap; }
+
+/* Dark follows the system unless a theme was picked: `dark:` matches either way. */
+@custom-variant dark {
+  :root[data-theme='dark'] & { @slot; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme='light']) & { @slot; } }
+}
+/* Phones, as in the JS (shape.ts NARROW): the same breakpoint picks the build-time drawings. */
+@custom-variant narrow (@media (max-width: 640px));
+@custom-variant tiny (@media (max-width: 440px));
+
+@theme static {
+  --font-sans: 'Instrument Sans', 'Instrument Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Paper Mono', ui-monospace, 'SF Mono', monospace;
+  --font-display: 'Schibsted Grotesk', 'Schibsted Grotesk Fallback', 'Instrument Sans', 'Instrument Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+
+  /* Light; dark values below. */
+  --color-paper: #fcfbf9;
+  --color-plate: #f3f1ed;
+  --color-plate-2: #ebe8e3;
+  --color-card: #ffffff;
+  --color-rule: #e8e5df;
+  --color-edge: #d9d5ce;
+  --color-ink: #0f0e0c;
+  --color-ink-2: #605d58;
+  --color-ink-3: #74716b;
+  --color-track: #d4d0c9;
+  --color-accent: #e0442a;
+  --color-accent-ink: #b0321b;
+  --color-rival: #8e8a84;
+  --color-hover-line: rgb(15 14 12 / 0.3);
+  /* Through a variable: Tailwind writes a literal shadow into the utility, which would ignore the dark value. */
+  --shadow-lift: var(--lift);
+
+  /* One column for everything: text, demos and code share a left edge. */
+  --container-col: 760px;
+  --container-text: 600px;
+}
+
+/* Dark: near-black, inks a step brighter so nothing goes gray and muddy. */
+@layer theme {
+  :root { --gutter: 24px; --lift: 0 1px 2px rgb(15 14 12 / 0.07), 0 0 0 1px rgb(15 14 12 / 0.05); color-scheme: light; }
+  @media (max-width: 640px) { :root { --gutter: 16px; } }
+  :root[data-theme='dark'] {
+    --color-paper: #0e0e0d; --color-plate: #191917; --color-plate-2: #252422; --color-card: #141413; --color-rule: #262523; --color-edge: #34332f;
+    --color-ink: #f5f4f2; --color-ink-2: #b4b1ab; --color-ink-3: #96938d; --color-track: #45433f;
+    --color-accent: #ff5b3a; --color-accent-ink: #ff8a6e; --color-rival: #6f6c67;
+    --color-hover-line: rgb(245 244 242 / 0.35); --lift: 0 0 0 1px rgb(255 255 255 / 0.07);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) {
+      --color-paper: #0e0e0d; --color-plate: #191917; --color-plate-2: #252422; --color-card: #141413; --color-rule: #262523; --color-edge: #34332f;
+      --color-ink: #f5f4f2; --color-ink-2: #b4b1ab; --color-ink-3: #96938d; --color-track: #45433f;
+      --color-accent: #ff5b3a; --color-accent-ink: #ff8a6e; --color-rival: #6f6c67;
+      --color-hover-line: rgb(245 244 242 / 0.35); --lift: 0 0 0 1px rgb(255 255 255 / 0.07);
+      color-scheme: dark;
+    }
+  }
+}
+
+@layer base {
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  /* The rail is the page's real scroller, so the browser's own bar stays quiet. */
+  html { scrollbar-width: thin; scrollbar-color: var(--color-edge) transparent; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    overflow-x: clip;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font: 400 17px/1.65 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  @media (max-width: 640px) { body { font-size: 16px; } }
+  ::selection { background: color-mix(in oklab, var(--color-accent) 22%, transparent); }
+  /* Links look like links unless a component says otherwise. */
+  a { color: inherit; text-decoration: underline; text-decoration-color: var(--color-edge); text-underline-offset: 3px; }
+  a:hover { text-decoration-color: currentColor; }
+  :focus-visible { outline: 2px solid var(--color-accent); outline-offset: 3px; border-radius: 8px; }
+  :focus:not(:focus-visible) { outline: none; }
+  /* Focus rings only once someone navigates with Tab, never after a click. */
+  :root:not([data-keyboard]) :focus-visible { outline: none; }
+  code { font: 400 0.88em var(--font-mono); }
+  [data-sillon] { cursor: pointer; }
+  [data-sillon]:focus-visible { outline-offset: 6px; }
+}
+
+/* Shiki's highlighted HTML is made at build time, so it's styled here rather than with classes. */
+@layer components {
+  pre.shiki {
+    margin: 0; padding: 20px 22px; border-radius: 12px; overflow-x: auto;
+    background: var(--color-plate) !important; font: 400 14px/1.7 var(--font-mono); color: var(--color-ink); tab-size: 2;
+  }
+  pre.shiki:focus-visible { outline-offset: 2px; }
+  /* Lines are blocks (newlines are stripped between them); keep empty ones a line tall. */
+  pre.shiki .line { display: block; min-height: 1.7em; }
+  pre.shiki span[style] { color: var(--shiki-light); font-style: var(--shiki-light-font-style); }
+  :root[data-theme='dark'] pre.shiki span[style] { color: var(--shiki-dark); font-style: var(--shiki-dark-font-style); }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) pre.shiki span[style] { color: var(--shiki-dark); font-style: var(--shiki-dark-font-style); }
+  }
+}
