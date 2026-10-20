@@ -12,9 +12,12 @@
     "binding": "ASSETS",
     "run_worker_first": ["/audio/*"]
   },
-  // One canonical address: no workers.dev URL and no preview URLs.
-  "routes": [{ "pattern": "sillon.mattrothenberg.com", "custom_domain": true }],
+  // Production at sillon.mattrothenberg.com; each branch's Preview at
+  // <branch>.sillon.mattrothenberg.com (`wrangler preview`). Nothing on workers.dev.
+  "routes": [{ "pattern": "sillon.mattrothenberg.com", "custom_domain": true, "previews_enabled": true }],
   "workers_dev": false,
   "preview_urls": false,
+  // Previews use the same assets and script as production; nothing to override.
+  "previews": {},
   "observability": { "enabled": true }
 }

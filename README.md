@@ -70,6 +70,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for how the code is organized, the rules 
 
 The site is a Cloudflare Worker (`apps/site/wrangler.jsonc`) serving the built files at [sillon.mattrothenberg.com](https://sillon.mattrothenberg.com), with the security headers in `apps/site/public/_headers` and no workers.dev or preview URLs. Static assets don't answer byte ranges, which audio needs to start playing and to seek, so a small script (`apps/site/worker/index.js`) serves `/audio/*` with them.
 
+Workers Builds deploys it from this repository: every push to `main` goes to production, and every other branch gets a Preview at `<branch>.sillon.mattrothenberg.com`, linked from its pull request. Build settings, in the Worker's Settings → Build: root directory `apps/site`, build command `pnpm install --frozen-lockfile --filter @sillon/site... && pnpm build`, deploy command `npx wrangler deploy`, preview command `npx wrangler preview`, and the build variable `PNPM_VERSION=12.3.4`.
+
+By hand:
+
 ```sh
 pnpm --filter @sillon/site preview   # build, then serve it locally with wrangler
 pnpm --filter @sillon/site deploy    # build, then deploy (needs `wrangler login`)
