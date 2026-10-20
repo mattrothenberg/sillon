@@ -5,13 +5,15 @@ import { colorParser } from './gl'
 // An <audio> element can feed only one MediaElementSource, ever, so the
 // analyser is shared per element. It's created on the first `play`, inside
 // the user's gesture, because once the element is routed through an
-// AudioContext it plays only while that context is running.
+// AudioContext it plays only while that context is running. Every element
+// shares one AudioContext: browsers limit how many a page can have.
 const graphs = new WeakMap<HTMLAudioElement, AnalyserNode>()
+let shared: AudioContext | null = null
 
 function analyserFor(audio: HTMLAudioElement): AnalyserNode {
   let analyser = graphs.get(audio)
   if (analyser) return analyser
-  const ctx = new AudioContext()
+  const ctx = (shared ??= new AudioContext())
   analyser = ctx.createAnalyser()
   analyser.fftSize = 2048
   analyser.smoothingTimeConstant = 0.7
@@ -26,19 +28,21 @@ function analyserFor(audio: HTMLAudioElement): AnalyserNode {
 }
 
 export interface VisualizerProps extends CanvasHTMLAttributes<HTMLCanvasElement> {
+  /** The player to listen to. Its audio is routed through Web Audio on the first play. */
   player: Player | null
-  /** Number of rays around the circle. */
+  /** Number of rays around the circle. Default 96. */
   rays?: number
-  /** Where the rays start, as a fraction of the outer radius. */
+  /** Where the rays start, as a fraction of the outer radius. Default 0.34. */
   innerRadius?: number
-  /** Ray thickness, in CSS pixels. */
+  /** Ray thickness, in CSS pixels. Default 1.4. */
   rayWidth?: number
-  /** Ray length in silence, as a fraction of the space between the inner and outer radius. */
+  /** Ray length in silence, as a fraction of the space between the inner and outer radius. Default 0.1. */
   idle?: number
-  /** Averages each ray with this many neighbors on each side, for a smoother shape. */
+  /** Averages each ray with this many neighbors on each side, for a smoother shape. Default 2. */
   smoothing?: number
-  /** Lowest and highest frequency shown, in Hz. */
+  /** Lowest frequency shown, in Hz. Default 50. */
   minHz?: number
+  /** Highest frequency shown, in Hz. Default 10000. */
   maxHz?: number
   /**
    * Fits the display to the music: the range widens to the lowest and
@@ -49,17 +53,18 @@ export interface VisualizerProps extends CanvasHTMLAttributes<HTMLCanvasElement>
    */
   autoLevel?: boolean
   /**
-   * GLSL for \`vec4 shade(Ray r)\`: draws with WebGL instead, calling it for every
-   * pixel with the spectrum around it (see Ray below). Also in scope: \`level\`
-   * (overall loudness, 0–1), \`time\` (the audio's current time, seconds),
-   * \`color\` (the canvas's CSS color) and \`rayWidth\`. Without it, rays are drawn
+   * GLSL for `vec4 shade(Ray r)`: draws with WebGL2 instead, calling it for every
+   * pixel with the spectrum around it (see Ray below). Also in scope: `level`
+   * (overall loudness, 0–1), `time` (the audio's current time, seconds),
+   * `color` (the canvas's CSS color) and `rayWidth`. Without it, rays are drawn
    * on a 2D canvas.
    */
   fragment?: string
+  /** The canvas. Needs React 19, where `ref` is a prop. */
   ref?: Ref<HTMLCanvasElement>
 }
 
-/** What a Visualizer \`fragment\` is given for each pixel. */
+/** What a Visualizer `fragment` is given for each pixel. */
 const RAY = `struct Ray {
   float index;   // the nearest ray, counting clockwise from 12 o'clock
   float value;   // its level, 0–1
@@ -71,7 +76,7 @@ const RAY = `struct Ray {
   float across;  // distance from the nearest ray's center line, CSS pixels
 };`
 
-/** The 2D drawing's look as a \`fragment\`: a thin ray of the CSS color. A place to start your own. */
+/** The 2D drawing's look as a `fragment`: a thin ray of the CSS color. A place to start your own. */
 export const visualizerRays = `vec4 shade(Ray r) {
   float w = rayWidth * 0.5;
   float side = 1.0 - smoothstep(w - 0.5, w + 0.5, r.across);
@@ -119,8 +124,15 @@ void main() {
 
 type Draw = (blurred: Float32Array, now: number) => void
 
-/** Sets up WebGL on \`canvas\` for \`shade\`; returns the draw call and a cleanup, or null without WebGL2. */
-function glDrawer(canvas: HTMLCanvasElement, shade: string, opts: () => { dpr: number; w: number; h: number; rays: number; inner: number; idle: number; rayWidth: number; time: number }): { draw: Draw; dispose: () => void } | null {
+const UNIFORMS = ['size', 'dpr', 'count', 'inner', 'idle', 'rayWidth', 'level', 'time', 'color'] as const
+type Uniforms = Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
+
+/**
+ * Sets up WebGL on `canvas` for `shade`; returns the draw call and a cleanup, or null without
+ * WebGL2. If the browser drops the context, everything is rebuilt when it comes back, and
+ * `restored` is called so the caller can draw again.
+ */
+function glDrawer(canvas: HTMLCanvasElement, shade: string, opts: () => { dpr: number; w: number; h: number; rays: number; inner: number; idle: number; rayWidth: number; time: number }, restored: () => void): { draw: Draw; dispose: () => void } | null {
   const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false })
   if (!gl) return null
   const shader = (type: number, src: string) => {
@@ -129,56 +141,81 @@ function glDrawer(canvas: HTMLCanvasElement, shade: string, opts: () => { dpr: n
     gl.compileShader(sh)
     return sh
   }
-  const prog = gl.createProgram()!
-  const fs = shader(gl.FRAGMENT_SHADER, frag(shade))
-  gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT))
-  gl.attachShader(prog, fs)
-  gl.linkProgram(prog)
+  const build = () => {
+    const prog = gl.createProgram()!
+    const fs = shader(gl.FRAGMENT_SHADER, frag(shade))
+    gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT))
+    gl.attachShader(prog, fs)
+    gl.linkProgram(prog)
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return { prog, error: gl.getShaderInfoLog(fs) ?? gl.getProgramInfoLog(prog) }
+    gl.useProgram(prog)
+    const buf = gl.createBuffer()
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+    const loc = gl.getAttribLocation(prog, 'p')
+    gl.enableVertexAttribArray(loc)
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+    const tex = gl.createTexture()
+    gl.bindTexture(gl.TEXTURE_2D, tex)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+    // Looked up once per program, not every frame.
+    const U = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)])) as Uniforms
+    return { prog, buf, tex, U }
+  }
+  const first = build()
   // A shader that doesn't compile is reported, and the canvas stays blank rather than taking the page down.
-  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-    console.error(`Visualizer: the fragment shader didn't compile.\n${gl.getShaderInfoLog(fs) ?? gl.getProgramInfoLog(prog)}`)
+  if ('error' in first) {
+    console.error(`Visualizer: the fragment shader didn't compile.\n${first.error}`)
     gl.getExtension('WEBGL_lose_context')?.loseContext()
     return null
   }
-  gl.useProgram(prog)
-  const buf = gl.createBuffer()
-  gl.bindBuffer(gl.ARRAY_BUFFER, buf)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
-  const loc = gl.getAttribLocation(prog, 'p')
-  gl.enableVertexAttribArray(loc)
-  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
-  const tex = gl.createTexture()
-  gl.bindTexture(gl.TEXTURE_2D, tex)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-  const U = (n: string) => gl.getUniformLocation(prog, n)
+  let res: Exclude<ReturnType<typeof build>, { error: unknown }> | null = first
   const parse = colorParser()
   let count = 0, rgba = [0, 0, 0, 1], colorAt = -Infinity
   const draw: Draw = (blurred, now) => {
+    if (!res) return
+    const { U } = res
     const o = opts()
-    if (canvas.width !== Math.round(o.w * o.dpr) || canvas.height !== Math.round(o.h * o.dpr)) {
-      canvas.width = Math.round(o.w * o.dpr); canvas.height = Math.round(o.h * o.dpr)
-    }
+    const w = Math.round(o.w * o.dpr), h = Math.round(o.h * o.dpr)
+    if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h }
     gl.viewport(0, 0, canvas.width, canvas.height)
     if (count !== o.rays) { count = o.rays; gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, count, 1, 0, gl.RED, gl.FLOAT, null) }
     gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, count, 1, gl.RED, gl.FLOAT, blurred)
     if (now - colorAt > 500) { colorAt = now; rgba = parse(getComputedStyle(canvas).color, rgba) }
     let sum = 0
     for (let i = 0; i < count; i++) sum += blurred[i]
-    gl.uniform2f(U('size'), o.w, o.h)
-    gl.uniform1f(U('dpr'), o.dpr)
-    gl.uniform1f(U('count'), count)
-    gl.uniform1f(U('inner'), o.inner)
-    gl.uniform1f(U('idle'), o.idle)
-    gl.uniform1f(U('rayWidth'), o.rayWidth)
-    gl.uniform1f(U('level'), count ? sum / count : 0)
-    gl.uniform1f(U('time'), o.time)
-    gl.uniform4fv(U('color'), rgba)
+    gl.uniform2f(U.size, o.w, o.h)
+    gl.uniform1f(U.dpr, o.dpr)
+    gl.uniform1f(U.count, count)
+    gl.uniform1f(U.inner, o.inner)
+    gl.uniform1f(U.idle, o.idle)
+    gl.uniform1f(U.rayWidth, o.rayWidth)
+    gl.uniform1f(U.level, count ? sum / count : 0)
+    gl.uniform1f(U.time, o.time)
+    gl.uniform4fv(U.color, rgba)
     gl.clearColor(0, 0, 0, 0)
     gl.clear(gl.COLOR_BUFFER_BIT)
     gl.drawArrays(gl.TRIANGLES, 0, 3)
   }
-  return { draw, dispose: () => { gl.deleteTexture(tex); gl.deleteBuffer(buf); gl.deleteProgram(prog) } }
+  const onLost = (e: Event) => { e.preventDefault(); res = null }
+  const onRestored = () => {
+    const next = build()
+    res = 'error' in next ? null : next
+    count = 0
+    colorAt = -Infinity
+    restored()
+  }
+  canvas.addEventListener('webglcontextlost', onLost)
+  canvas.addEventListener('webglcontextrestored', onRestored)
+  return {
+    draw,
+    dispose: () => {
+      canvas.removeEventListener('webglcontextlost', onLost)
+      canvas.removeEventListener('webglcontextrestored', onRestored)
+      if (res) { gl.deleteTexture(res.tex); gl.deleteBuffer(res.buf); gl.deleteProgram(res.prog) }
+    },
+  }
 }
 
 /**
@@ -187,13 +224,17 @@ function glDrawer(canvas: HTMLCanvasElement, shade: string, opts: () => { dpr: n
  * is one continuous blob. Color is the canvas's CSS `color`. Draws only
  * while playing, and while settling back to rest after a pause. With
  * `fragment`, draws with WebGL and your shader instead.
+ *
+ * Routes the player's `<audio>` through an `AnalyserNode` on the first play,
+ * permanently; every player shares one `AudioContext`. Audio from another origin then needs CORS headers and
+ * `crossOrigin` set before it loads, or it plays silent.
  */
 export function Visualizer({ player, rays = 96, innerRadius = 0.34, rayWidth = 1.4, idle = 0.1, smoothing = 2, minHz = 50, maxHz = 10000, autoLevel = true, fragment, style, ref, ...props }: VisualizerProps) {
   const own = useRef<HTMLCanvasElement | null>(null)
   useEffect(() => {
     const canvas = own.current!
     // One context per canvas: the canvas is keyed on the renderer, so switching gets a fresh one.
-    const webgl = fragment ? glDrawer(canvas, fragment, () => ({ dpr, w, h, rays, inner: innerRadius, idle, rayWidth, time: player?.time ?? 0 })) : null
+    const webgl = fragment ? glDrawer(canvas, fragment, () => ({ dpr, w, h, rays, inner: innerRadius, idle, rayWidth, time: player?.time ?? 0 }), () => draw()) : null
     // Null when the canvas already holds a WebGL context that failed: then it stays blank.
     const g = webgl ? null : canvas.getContext('2d')
     let raf = 0, w = 0, h = 0, dpr = 1, color = '', colorAt = -Infinity
@@ -269,7 +310,7 @@ export function Visualizer({ player, rays = 96, innerRadius = 0.34, rayWidth = 1
           let v: number
           if (autoLevel) {
             // Music loses energy as pitch rises: lift bands by 3 dB per octave above 1 kHz (the byte scale spans 68 dB),
-            // then compare each with its own recent peak. Silence isn't lifted: that held empty bands out at a fixed length.
+            // then compare each with its own recent peak. Silence isn't lifted, or empty bands would sit at a fixed length.
             const hzMid = lowHz * Math.pow(topHz / lowHz, (k + 0.5) / half)
             const x = m ? Math.min(1, Math.max(0, m / 255 + (3 * Math.log2(hzMid / 1000)) / 68)) : 0
             peak[k] = Math.max(x, peak[k] * 0.999, 0.15)

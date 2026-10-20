@@ -3,6 +3,7 @@ import { usePlayer, type Player } from './player'
 import { usePeaks, type UsePeaks } from './use-peaks'
 
 export interface UseAudio extends UsePeaks {
+  /** The player for `src`, from `usePlayer`. */
   player: Player
 }
 

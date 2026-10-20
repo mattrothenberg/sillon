@@ -4,15 +4,14 @@
 //   vec4 shade(Bar b)
 //
 // called for every pixel inside a bar, which knows about the waveform and the
-// audio (see Bar below), so an effect can follow the music instead of sitting
-// behind it. Raw WebGL, no dependencies. Colors come from CSS custom properties
+// audio (see Bar below). Raw WebGL, no dependencies. Colors come from CSS custom properties
 // on the canvas, so themes still live in CSS:
 //
 //   --wave-color      unplayed bars (waveColor in GLSL)
 //   --wave-progress   played bars (progressColor)
 //   --wave-glow       halo around played bars, defaults to --wave-progress
 import { useLayoutEffect, useRef, type CanvasHTMLAttributes } from 'react'
-import { isReady, level, timeToX, useWaveform } from './waveform'
+import { fillBars, isReady, level, timeToX, useWaveform } from './waveform'
 
 export interface GLProps extends CanvasHTMLAttributes<HTMLCanvasElement> {
   /**
@@ -26,7 +25,7 @@ export interface GLProps extends CanvasHTMLAttributes<HTMLCanvasElement> {
   glow?: number
   /** How much bars near the pointer grow. Off (0) unless you set it. */
   swell?: number
-  /** Width of the swell, in pixels. */
+  /** Width of the swell, in CSS pixels. Default 56. */
   swellRadius?: number
 }
 
@@ -49,7 +48,7 @@ const frag = (shade: string) => `#version 300 es
 precision highp float;
 uniform sampler2D bars;
 uniform vec2 size;          // CSS pixels
-uniform float dpr, pitch, barW, radius, minH, count, align;
+uniform float dpr, pitch, barW, radius, minH, count, align, scale;
 uniform float progress;     // x of the playhead, CSS pixels
 uniform float secPerPx, time, level;
 uniform float hoverX, hoverAmt, swell, swellR, glow;
@@ -62,7 +61,7 @@ float amp(float i) { return texelFetch(bars, ivec2(int(i), 0), 0).r; }
 
 float height(float i) {
   if (i < 0.0 || i >= count) return -1.0;
-  float h = amp(i) * size.y;
+  float h = amp(i) * scale * size.y;
   float c = i * pitch + barW * 0.5;
   float d = (c - hoverX) / swellR;
   h *= 1.0 + swell * hoverAmt * exp(-d * d);
@@ -108,7 +107,7 @@ void main() {
   vec4 base = shade(b);
   vec4 col = vec4(base.rgb * base.a, base.a) * cover;
   if (glow > 0.0 && b.played) {
-    // Brighter close to the playhead, like light catching a groove.
+    // Brighter close to the playhead.
     float near = 0.35 + 0.65 * exp(-(progress - p.x) / 120.0);
     float g = glow * near * exp(-max(d, 0.0) / 6.0) * (1.0 - cover);
     col += vec4(glowColor.rgb, 1.0) * glowColor.a * g * 0.6;
@@ -137,10 +136,14 @@ export function colorParser() {
   }
 }
 
-const UNIFORMS = ['bars', 'size', 'dpr', 'pitch', 'barW', 'radius', 'minH', 'count', 'align', 'progress', 'secPerPx', 'time', 'level', 'hoverX', 'hoverAmt', 'swell', 'swellR', 'glow', 'waveColor', 'progressColor', 'glowColor'] as const
+const UNIFORMS = ['bars', 'size', 'dpr', 'pitch', 'barW', 'radius', 'minH', 'count', 'align', 'scale', 'progress', 'secPerPx', 'time', 'level', 'hoverX', 'hoverAmt', 'swell', 'swellR', 'glow', 'waveColor', 'progressColor', 'glowColor'] as const
 
 /**
- * Drop-in replacement for `Shape` that draws with WebGL2, colored by `fragment`. One full-screen
+ * Draws the bars with WebGL2 in place of `Shape`, colored by `fragment`. Colors
+ * come from `--wave-color`, `--wave-progress` and `--wave-glow`. Applies
+ * `smoothing` like Shape, but not the `reveal` sweep. Without WebGL2, or if the shader doesn't
+ * compile, the canvas stays empty (and the compiler's message is logged). If the
+ * browser drops the WebGL context, it's rebuilt when the context comes back. One full-screen
  * triangle; bar heights live in a 1-pixel-tall float texture, so a frame is
  * a single draw call however many bars there are. Draws only when
  * something changes.
@@ -156,48 +159,61 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
     const canvas = ref.current!
     const gl = canvas.getContext('webgl2', { premultipliedAlpha: true, antialias: false })
     if (!gl) return
+    type Uniforms = Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
+    // Everything the GPU holds. Built once, and again if the context is lost and restored.
+    let res: { prog: WebGLProgram; buf: WebGLBuffer | null; tex: WebGLTexture | null; U: Uniforms } | null = null
     const shader = (type: number, src: string) => {
       const sh = gl.createShader(type)!
       gl.shaderSource(sh, src)
       gl.compileShader(sh)
       return sh
     }
-    const prog = gl.createProgram()!
-    const fs = shader(gl.FRAGMENT_SHADER, frag(fragment))
-    gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT))
-    gl.attachShader(prog, fs)
-    gl.linkProgram(prog)
-    // A shader that doesn't compile is reported and draws nothing, rather than taking the page down.
-    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
-      console.error(`Waveform.GL: the fragment shader didn't compile.\n${gl.getShaderInfoLog(fs) ?? gl.getProgramInfoLog(prog)}`)
-      return
+    const build = () => {
+      const prog = gl.createProgram()!
+      const fs = shader(gl.FRAGMENT_SHADER, frag(fragment))
+      gl.attachShader(prog, shader(gl.VERTEX_SHADER, VERT))
+      gl.attachShader(prog, fs)
+      gl.linkProgram(prog)
+      // A shader that doesn't compile is reported and draws nothing, rather than taking the page down.
+      if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+        if (!gl.isContextLost()) console.error(`Waveform.GL: the fragment shader didn't compile.\n${gl.getShaderInfoLog(fs) ?? gl.getProgramInfoLog(prog)}`)
+        return null
+      }
+      gl.useProgram(prog)
+      const buf = gl.createBuffer()
+      gl.bindBuffer(gl.ARRAY_BUFFER, buf)
+      gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
+      const loc = gl.getAttribLocation(prog, 'p')
+      gl.enableVertexAttribArray(loc)
+      gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
+      const tex = gl.createTexture()
+      gl.bindTexture(gl.TEXTURE_2D, tex)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+      const U = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)])) as Uniforms
+      return { prog, buf, tex, U }
     }
-    gl.useProgram(prog)
-    const buf = gl.createBuffer()
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf)
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW)
-    const loc = gl.getAttribLocation(prog, 'p')
-    gl.enableVertexAttribArray(loc)
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0)
-    const tex = gl.createTexture()
-    gl.bindTexture(gl.TEXTURE_2D, tex)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-    const U = Object.fromEntries(UNIFORMS.map((n) => [n, gl.getUniformLocation(prog, n)])) as Record<(typeof UNIFORMS)[number], WebGLUniformLocation | null>
+    res = build()
+    if (!res) return
 
     const parse = colorParser()
     const css = getComputedStyle(canvas)
-    let raf = 0, count = 0, heights = new Float32Array(0)
+    const scratch: { bars?: Float32Array; raw?: Float32Array } = {}
+    const near = new Float32Array(1)
+    let raf = 0, count = 0
+    let heights: Float32Array = new Float32Array(0)
     let dataVersion = -1, dataGain = -1, layoutDirty = true
     let hoverAmt = 0, hoverX = -1e4, loud = 0
     let colorsAt = -Infinity
 
-    const layout = () => {
+    const layout = (U: Uniforms) => {
       const s = store.state
       const dpr = Math.min(2, devicePixelRatio || 1)
-      canvas.width = Math.max(1, Math.round(s.width * dpr))
-      canvas.height = Math.max(1, Math.round(s.height * dpr))
-      gl.viewport(0, 0, canvas.width, canvas.height)
+      // Assigning a canvas's size reallocates its buffer, even to the same value: only on a real change.
+      const w = Math.max(1, Math.round(s.width * dpr)), h = Math.max(1, Math.round(s.height * dpr))
+      if (canvas.width !== w) canvas.width = w
+      if (canvas.height !== h) canvas.height = h
+      gl.viewport(0, 0, w, h)
       const pitch = s.barWidth + s.barGap
       const n = Math.max(1, Math.floor((s.width + s.barGap) / pitch + 1e-6))
       if (n !== count) {
@@ -213,6 +229,8 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
       gl.uniform1f(U.minH, s.minBarHeight)
       gl.uniform1f(U.count, count)
       gl.uniform1f(U.align, s.align === 'bottom' ? 1 : s.align === 'top' ? -1 : 0)
+      // Like Shape: heights scaled after normalize and contrast, then clamped to the waveform.
+      gl.uniform1f(U.scale, s.scale)
       dataVersion = -1
       layoutDirty = false
     }
@@ -220,8 +238,9 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
     const frame = (now: number) => {
       raf = 0
       const s = store.state
-      if (!s.width || !s.height) return
-      if (layoutDirty) layout()
+      if (!res || !s.width || !s.height) return
+      const { U } = res
+      if (layoutDirty) layout(U)
       // Like Shape: nothing at all until the bars are ready, not a row of minimum-height bars.
       if (!isReady(s)) { gl.clearColor(0, 0, 0, 0); gl.clear(gl.COLOR_BUFFER_BIT); return }
       const { peaks } = s
@@ -229,7 +248,9 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
       if (peaks && (peaks.version !== dataVersion || s.gain !== dataGain)) {
         dataVersion = peaks.version
         dataGain = s.gain
-        peaks.bars(s.start, s.end, heights)
+        // The same bars as Shape, smoothing included.
+        scratch.bars = heights
+        heights = fillBars(s, count, scratch)
         const k = s.gain
         for (let i = 0; i < count; i++) heights[i] = level(heights[i] * k, s.contrast)
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, count, 1, gl.RED, gl.FLOAT, heights)
@@ -249,7 +270,7 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
       }
       // Loudness at the playhead, eased so it reads as a level rather than flicker.
       const t = s.player?.time ?? 0
-      const want = peaks && s.player?.playing ? level(peaks.peak(Math.max(0, t - 0.04), t + 0.04) * s.gain, s.contrast) : 0
+      const want = peaks && s.player?.playing ? level(peaks.bars(Math.max(0, t - 0.04), t + 0.04, near)[0] * s.gain, s.contrast) : 0
       loud += (want - loud) * 0.35
       if (Math.abs(want - loud) < 0.002) loud = want
       gl.uniform1f(U.progress, timeToX(s, t))
@@ -266,9 +287,27 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
       gl.drawArrays(gl.TRIANGLES, 0, 3)
       if (hoverAmt !== target || loud !== want) invalidate()
     }
-    const invalidate = () => { if (!raf) raf = requestAnimationFrame(frame) }
+    const invalidate = () => { if (!raf && res) raf = requestAnimationFrame(frame) }
     invalidateRef.current = () => { colorsAt = -Infinity; invalidate() }
     invalidate()
+
+    // The browser can drop the context (too many on a page, a GPU reset). Ask for it back,
+    // and rebuild everything when it returns: the old program, buffer and texture are gone.
+    const lost = (e: Event) => {
+      e.preventDefault()
+      cancelAnimationFrame(raf)
+      raf = 0
+      res = null
+    }
+    const restored = () => {
+      res = build()
+      count = 0
+      layoutDirty = true
+      colorsAt = -Infinity
+      invalidate()
+    }
+    canvas.addEventListener('webglcontextlost', lost)
+    canvas.addEventListener('webglcontextrestored', restored)
 
     let player = store.state.player
     let unTime = player?.onTime(invalidate)
@@ -283,9 +322,13 @@ export function GL({ fragment = DEFAULT_SHADE, glow = 0, swell = 0, swellRadius 
       cancelAnimationFrame(raf)
       unsub()
       unTime?.()
-      gl.deleteTexture(tex)
-      gl.deleteBuffer(buf)
-      gl.deleteProgram(prog)
+      canvas.removeEventListener('webglcontextlost', lost)
+      canvas.removeEventListener('webglcontextrestored', restored)
+      if (res) {
+        gl.deleteTexture(res.tex)
+        gl.deleteBuffer(res.buf)
+        gl.deleteProgram(res.prog)
+      }
     }
   }, [store, fragment])
 

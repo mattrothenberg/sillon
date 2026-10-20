@@ -1,4 +1,4 @@
-// node --test test/  — checks the mipmap against a brute-force max.
+// Checks the mipmap against a brute-force max.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { Peaks } from '../src/peaks.ts'
@@ -14,7 +14,7 @@ test('every level matches a brute-force max, across chunked appends', () => {
     assert.equal(p.max, brute(v, 0, n))
     for (const count of [1, 7, 400]) {
       const bars = p.bars(0, n, new Float32Array(count))
-      // Bars split the level's cells between them; past one cell per bar, each reads the cell under its centre.
+      // Bars split the level's cells between them; past one cell per bar, each reads the cell under its center.
       const per = n / count, k = Math.max(0, Math.floor(Math.log2(Math.max(1, per / 4)))), s = 2 ** k, cells = per / s
       let covered = 0
       for (let b = 0; b < count; b++) {

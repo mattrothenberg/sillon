@@ -9,6 +9,8 @@
     "noEmit": true,
     "skipLibCheck": true,
     "isolatedModules": true,
+    // Type-check the apps against the packages' source, as their Vite configs run it.
+    "customConditions": ["@sillon/source"],
     "verbatimModuleSyntax": true,
     "types": ["vite/client"]
   }

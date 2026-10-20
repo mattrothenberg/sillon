@@ -3,12 +3,20 @@
 // (the whole hour, or five seconds of it) touches about one value per bar.
 
 export interface PeaksInit {
+  /** Samples per second of the source audio. */
   sampleRate: number
   /** Samples per level-0 bucket. */
   bucketSize: number
   /** Level-0 buckets expected in total, if known up front (lets a streaming waveform fill left to right). */
   expected?: number
 }
+
+/**
+ * How `Peaks.from` places its values in time: the audio's sample rate and the
+ * samples behind each value, or just the audio's duration (as wavesurfer.js's
+ * `peaks` and `duration` options do), which spreads the values evenly across it.
+ */
+export type PeaksFromInit = { sampleRate: number; bucketSize: number } | { duration: number }
 
 type Listener = () => void
 
@@ -35,7 +43,14 @@ export interface EncodeOptions {
   bits?: 8 | 16
 }
 
+/**
+ * The loudness of a recording over time: the largest absolute sample in each
+ * bucket of `bucketSize` samples, across channels (0 silent, 1 full scale, not
+ * normalized). Grows as values are appended, and reads any range at any number
+ * of bars by touching only a few values per bar.
+ */
 export class Peaks {
+  /** Samples per second of the source audio. */
   sampleRate: number
   /** Samples per level-0 bucket. Set at construction, or by `begin` before any values arrive. */
   bucketSize: number
@@ -49,6 +64,8 @@ export class Peaks {
   private levels: Float32Array[] = [new Float32Array(1024)]
   private counts: number[] = [0]
   private expectedBuckets: number
+  // Set by `Peaks.from` with a duration, so `duration` reads back exactly what was given.
+  private exactDuration: number | null = null
   private listeners = new Set<Listener>()
 
   constructor(init: PeaksInit) {
@@ -57,11 +74,29 @@ export class Peaks {
     this.expectedBuckets = init.expected ?? 0
   }
 
-  /** Wrap precomputed max-abs values (from a server, a cache, or `toArray()`). */
-  static from(values: ArrayLike<number>, init: Omit<PeaksInit, 'expected'>): Peaks {
-    const p = new Peaks(init)
-    p.append(values)
+  /**
+   * Wraps values you already have (from a server, a cache, `toArray()`, or
+   * wavesurfer.js's `exportPeaks()`), already complete. `values` is one array,
+   * or one per channel; values may be signed, and each bucket keeps the largest
+   * absolute value across channels. Place them with `{ sampleRate, bucketSize }`,
+   * or with `{ duration }` in seconds, which spreads them evenly over it.
+   */
+  static from(values: ArrayLike<number> | readonly ArrayLike<number>[], init: PeaksFromInit): Peaks {
+    const channels: readonly ArrayLike<number>[] = isChannels(values) ? values : [values]
+    const n = channels.reduce((m, c) => Math.max(m, c.length), 0)
+    const merged = new Float32Array(n)
+    for (const c of channels) {
+      for (let i = 0; i < c.length; i++) {
+        const v = Math.abs(c[i])
+        if (v > merged[i]) merged[i] = v
+      }
+    }
+    const byDuration = 'duration' in init
+    if (byDuration && !(init.duration > 0)) throw new Error(`Peaks.from: duration must be positive, not ${init.duration}`)
+    const p = byDuration ? new Peaks({ sampleRate: n / init.duration, bucketSize: 1 }) : new Peaks(init)
+    p.append(merged)
     p.finish()
+    if (byDuration) p.exactDuration = init.duration
     return p
   }
 
@@ -77,11 +112,13 @@ export class Peaks {
 
   /** Seconds the waveform spans (an estimate until `complete`). */
   get duration(): number {
+    if (this.exactDuration !== null && this.complete) return this.exactDuration
     return (this.span * this.bucketSize) / this.sampleRate
   }
 
   /** Seconds decoded so far. */
   get loaded(): number {
+    if (this.exactDuration !== null && this.complete) return this.exactDuration
     return (this.counts[0] * this.bucketSize) / this.sampleRate
   }
 
@@ -90,9 +127,11 @@ export class Peaks {
     this.sampleRate = sampleRate
     this.bucketSize = bucketSize
     this.expectedBuckets = expected
+    this.exactDuration = null
     this.emit()
   }
 
+  /** Adds values to the end and notifies subscribers. */
   append(values: ArrayLike<number>): void {
     const len = values.length
     if (!len) return
@@ -138,6 +177,7 @@ export class Peaks {
     return level
   }
 
+  /** Marks the peaks complete and notifies subscribers. */
   finish(): void {
     this.complete = true
     this.emit()
@@ -160,8 +200,8 @@ export class Peaks {
     const scale = 2 ** k
     const cells = perBar / scale
     for (let bar = 0; bar < count; bar++) {
-      // Every cell belongs to exactly one bar: neighbors never share a value
-      // (which drew them in matching pairs), and no peak falls between two bars.
+      // Every cell belongs to exactly one bar: neighbors never share a value,
+      // and no peak falls between two bars.
       // Zoomed past one cell per bar, each bar shows the cell under its center.
       // The view's own two ends round outward, so a partial cell there still shows.
       const edge = (i: number) => (a + i * perBar) / scale
@@ -179,8 +219,19 @@ export class Peaks {
     return this.bars(start, end, new Float32Array(1))[0]
   }
 
-  /** Packs the level-0 values into the `.peaks` format, for peaks made ahead of time. */
+  /**
+   * Packs the level-0 values into the `.peaks` format, for peaks made ahead of
+   * time. The format stores the sample rate and bucket size as whole numbers, so
+   * peaks made with `Peaks.from(values, { duration })` can't be encoded: make
+   * them with `{ sampleRate, bucketSize }` instead.
+   */
   encode({ bits = 8 }: EncodeOptions = {}): ArrayBuffer {
+    if (!isU32(this.sampleRate) || !isU32(this.bucketSize)) {
+      throw new Error(
+        `encode: .peaks files store whole-number sample rates and bucket sizes, not ${this.sampleRate} and ${this.bucketSize}. ` +
+          'Make the peaks with Peaks.from(values, { sampleRate, bucketSize }) to encode them.',
+      )
+    }
     const values = this.toArray()
     const top = bits === 8 ? 255 : 65535
     const buf = new ArrayBuffer(HEADER + values.length * (bits / 8))
@@ -207,6 +258,8 @@ export class Peaks {
     const bits = v.getUint8(5)
     if (bits !== 8 && bits !== 16) throw new Error(`.peaks with ${bits}-bit values is not supported`)
     const sampleRate = v.getUint32(8, true), bucketSize = v.getUint32(12, true), count = v.getUint32(16, true)
+    const needed = HEADER + count * (bits / 8)
+    if (buf.byteLength < needed) throw new Error(`truncated .peaks file: ${count} values need ${needed} bytes, got ${buf.byteLength}`)
     const scale = v.getFloat32(20, true) / (bits === 8 ? 255 : 65535)
     // Copied out, so the values are aligned whatever the buffer's offset.
     const raw = bits === 8 ? new Uint8Array(buf.slice(HEADER, HEADER + count)) : new Uint16Array(buf.slice(HEADER, HEADER + count * 2))
@@ -222,6 +275,7 @@ export class Peaks {
     return this.levels[0].slice(0, this.counts[0])
   }
 
+  /** Calls `listener` on every change. Returns an unsubscribe function. */
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener)
     return () => this.listeners.delete(listener)
@@ -232,3 +286,9 @@ export class Peaks {
     for (const l of this.listeners) l()
   }
 }
+
+/** An array of channels rather than one channel: its first element is itself array-like. */
+const isChannels = (v: ArrayLike<number> | readonly ArrayLike<number>[]): v is readonly ArrayLike<number>[] =>
+  v.length > 0 && typeof (v as ArrayLike<unknown>)[0] === 'object'
+
+const isU32 = (x: number) => Number.isInteger(x) && x >= 0 && x <= 0xffffffff

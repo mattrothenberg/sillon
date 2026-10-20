@@ -1,22 +1,38 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
 
+/** A span of time, in seconds. */
 export interface Span {
   start: number
   end: number
 }
 
-/** A thin wrapper over an <audio> element with a per-frame clock. */
+/** A thin wrapper over an `<audio>` (or `<video>`) element with a per-frame clock. */
 export interface Player {
-  readonly audio: HTMLAudioElement
+  /**
+   * The element itself, for anything else: `volume`, `muted`, `playbackRate`,
+   * `crossOrigin`. An `<audio>` the player made, or the element you passed to `createPlayer`.
+   */
+  readonly audio: HTMLMediaElement
+  /** Current time, in seconds. */
   readonly time: number
+  /** Duration in seconds, or 0 until known. */
   readonly duration: number
   readonly playing: boolean
+  /** The element's error, if loading or playing failed, else null. */
+  readonly error: MediaError | null
   /** The span set with `setLoop`, or null. */
   readonly loop: Span | null
+  /** Starts playback. Rejects if the browser refuses, for example before any user gesture. */
   play(): Promise<void>
   pause(): void
+  /** Plays if paused, pauses if playing. A refused play is ignored. */
   toggle(): void
+  /** Pauses and goes back to the start. */
+  stop(): void
+  /** Moves to `seconds`, and tells `onTime` listeners right away. */
   seek(seconds: number): void
+  /** Moves by `seconds` (negative to go back), within the audio. */
+  skip(seconds: number): void
   /**
    * Repeats a span: when playback reaches `end` from inside the span, it
    * jumps back to `start`. Seeking outside the span plays on normally until
@@ -25,14 +41,28 @@ export interface Player {
   setLoop(span: Span | null): void
   /** Called every animation frame while playing, and on every seek. */
   onTime(listener: (seconds: number) => void): () => void
-  /** Called when playing, duration, ended or loop state changes. */
+  /** Called when playing, duration, ended, error or loop state changes. */
   subscribe(listener: () => void): () => void
+  /**
+   * Stops listening to the element and drops every listener. For players from
+   * `createPlayer`, when you're done with one; `usePlayer` manages its own.
+   */
+  destroy(): void
 }
 
-export function createPlayer(src?: string): Player {
-  const audio = new Audio()
-  audio.preload = 'metadata'
-  if (src) audio.src = src
+/**
+ * A player, usable outside React or shared between components. Given a URL,
+ * or nothing, it creates an `<audio>` element with `preload="metadata"`. Given
+ * an element, such as a `<video>` on the page, it plays through that one, as is.
+ * Needs a browser.
+ */
+export function createPlayer(source?: string | HTMLMediaElement): Player {
+  const own = typeof source !== 'object'
+  const audio: HTMLMediaElement = own ? new Audio() : source
+  if (own) {
+    audio.preload = 'metadata'
+    if (source) audio.src = source
+  }
   const timeListeners = new Set<(t: number) => void>()
   const listeners = new Set<() => void>()
   let raf = 0
@@ -71,26 +101,39 @@ export function createPlayer(src?: string): Player {
     for (const l of listeners) l()
     if (!audio.paused && !raf) raf = requestAnimationFrame(tick)
   }
-  for (const e of ['play', 'pause', 'ended', 'durationchange', 'loadedmetadata']) audio.addEventListener(e, changed)
-  for (const e of ['play', 'pause', 'seeked', 'ratechange']) audio.addEventListener(e, arm)
-  audio.addEventListener('seeked', tick)
+  const quietPlay = () => void audio.play().catch(() => {})
   // A loop that runs to the end of the file: the element stops there, so start it again.
-  audio.addEventListener('ended', () => void (wrap() && audio.play()))
+  const ended = () => { if (wrap()) quietPlay() }
+  const events: [string, () => void][] = [
+    ...['play', 'pause', 'ended', 'durationchange', 'loadedmetadata', 'error', 'emptied'].map((e) => [e, changed] as [string, () => void]),
+    ...['play', 'pause', 'seeked', 'ratechange'].map((e) => [e, arm] as [string, () => void]),
+    ['seeked', tick], ['ended', ended],
+  ]
+  for (const [e, f] of events) audio.addEventListener(e, f)
+  const seek = (seconds: number) => {
+    inside = within(Math.max(0, seconds))
+    audio.currentTime = Math.max(0, seconds)
+    // Report straight away so scrubbing doesn't wait on the media pipeline.
+    for (const l of timeListeners) l(audio.currentTime)
+  }
 
   return {
     audio,
     get time() { return audio.currentTime },
     get duration() { return duration() },
     get playing() { return !audio.paused },
+    get error() { return audio.error },
     get loop() { return loop },
     play: () => audio.play(),
     pause: () => audio.pause(),
-    toggle: () => void (audio.paused ? audio.play() : audio.pause()),
-    seek(seconds) {
-      inside = within(Math.max(0, seconds))
-      audio.currentTime = Math.max(0, seconds)
-      // Report straight away so scrubbing doesn't wait on the media pipeline.
-      for (const l of timeListeners) l(audio.currentTime)
+    toggle: () => (audio.paused ? quietPlay() : audio.pause()),
+    stop() {
+      audio.pause()
+      seek(0)
+    },
+    seek,
+    skip(seconds) {
+      seek(Math.min(audio.currentTime + seconds, duration() || Infinity))
     },
     setLoop(span) {
       loop = span && span.end > span.start ? { start: Math.max(0, span.start), end: span.end } : null
@@ -100,25 +143,64 @@ export function createPlayer(src?: string): Player {
     },
     onTime(l) { timeListeners.add(l); return () => timeListeners.delete(l) },
     subscribe(l) { listeners.add(l); return () => listeners.delete(l) },
+    destroy() {
+      for (const [e, f] of events) audio.removeEventListener(e, f)
+      cancelAnimationFrame(raf)
+      clearTimeout(timer)
+      raf = timer = 0
+      timeListeners.clear()
+      listeners.clear()
+    },
   }
 }
 
-/** One player per component, pointed at `src`. Pauses on unmount. */
+/**
+ * What `usePlayer` returns while rendering on the server, where there's no
+ * `<audio>`: paused at 0, and every method does nothing. The browser renders
+ * with a real player from the start, so markup and behavior match.
+ */
+const serverPlayer: Player = {
+  get audio(): HTMLMediaElement { throw new Error('player.audio is only available in the browser') },
+  time: 0, duration: 0, playing: false, error: null, loop: null,
+  play: () => Promise.resolve(), pause() {}, toggle() {}, stop() {}, seek() {}, skip() {}, setLoop() {},
+  onTime: () => noop, subscribe: () => noop, destroy() {},
+}
+
+/**
+ * One player per component, pointed at `src`; a new `src` loads that file, and
+ * no `src` unloads it. On unmount it pauses and lets go of the file. Safe to
+ * render on the server: there, it's a stand-in that does nothing.
+ */
 export function usePlayer(src?: string): Player {
-  const [player] = useState(() => createPlayer())
+  const [player] = useState(() => (typeof window === 'undefined' ? serverPlayer : createPlayer()))
   useEffect(() => {
-    if (src && player.audio.getAttribute('src') !== src) player.audio.src = src
+    const a = player.audio
+    if (src) {
+      if (a.getAttribute('src') !== src) a.src = src
+    } else if (a.hasAttribute('src')) {
+      a.removeAttribute('src')
+      a.load()
+    }
   }, [player, src])
-  useEffect(() => () => player.pause(), [player])
+  useEffect(() => () => {
+    player.pause()
+    // Stops the download and frees the decoder; the src effect sets it again on a remount.
+    player.audio.removeAttribute('src')
+    player.audio.load()
+  }, [player])
   return player
 }
 
-/** `playing` and `duration`, re-rendering only when they change. */
-export function usePlayerState(player: Player | null | undefined): { playing: boolean; duration: number } {
+/**
+ * `playing`, `duration` (seconds, 0 until known) and `error` (the element's
+ * `MediaError`, or null), re-rendering only when they change.
+ */
+export function usePlayerState(player: Player | null | undefined): { playing: boolean; duration: number; error: MediaError | null } {
   const subscribe = useCallback((l: () => void) => player?.subscribe(l) ?? noop, [player])
   const playing = useSyncExternalStore(subscribe, () => player?.playing ?? false, () => false)
   const duration = useSyncExternalStore(subscribe, () => player?.duration ?? 0, () => 0)
-  return { playing, duration }
+  const error = useSyncExternalStore(subscribe, () => player?.error ?? null, () => null)
+  return { playing, duration, error }
 }
 
 const noop = () => {}

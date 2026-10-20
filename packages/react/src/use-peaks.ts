@@ -23,15 +23,22 @@ function release(url: string, e: Entry) {
 }
 
 export interface UsePeaks {
-  /** Empty at first, then filling in as the file streams. Never null once there's a URL. */
+  /** Null on the first render and without a URL; after that, a Peaks that fills in as the file streams. */
   peaks: Peaks | null
   /** Milliseconds until the first buckets arrived. */
   firstMs: number | null
+  /** How the file was read and how long it took, once complete. */
   stats: StreamStats | null
+  /** Set if loading failed. */
   error: Error | null
 }
 
-/** Streams peaks for `url`. Pass precomputed `Peaks` straight to `Waveform.Root` instead if you have them. */
+/**
+ * Streams peaks for an audio file, or reads a `.peaks` file (see `streamPeaks`).
+ * Streams are shared by URL, so two waveforms of one file load it once;
+ * `options` are those of the first caller. Pass precomputed `Peaks` straight
+ * to `Waveform.Root` instead if you have them.
+ */
 export function usePeaks(url: string | null | undefined, options?: StreamOptions): UsePeaks {
   const [state, setState] = useState<UsePeaks & { url?: string | null }>({ peaks: null, firstMs: null, stats: null, error: null })
   useEffect(() => {

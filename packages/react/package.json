@@ -1,26 +1,70 @@
 {
   "name": "@sillon/react",
-  "version": "0.0.0",
-  "description": "Headless waveform components for React. The SVG supplies the shape; your CSS supplies everything else.",
+  "version": "0.1.0",
+  "description": "Headless waveform components for React. The library draws the shape; your CSS decides how it looks.",
+  "author": "Matt Rothenberg",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattrothenberg/sillon.git",
+    "directory": "packages/react"
+  },
+  "homepage": "https://sillon.mattrothenberg.com",
+  "bugs": {
+    "url": "https://github.com/mattrothenberg/sillon/issues"
+  },
+  "keywords": [
+    "react",
+    "audio",
+    "waveform",
+    "headless",
+    "player",
+    "wavesurfer"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": {
+      "@sillon/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
-    "typecheck": "tsc -p ."
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc -p .",
+    "test": "vitest run && node --test test/*.test.ts",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@sillon/core": "workspace:*"
+    "@sillon/core": "workspace:^"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=19"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
     "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitest/browser-playwright": "5.0.3",
+    "playwright": "1.64.1",
+    "publint": "^0.3.25",
     "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "tsdown": "^0.23.1",
     "typescript": "^7.0.2",
-    "vite": "^8.3.4"
+    "vite": "^8.3.4",
+    "vitest": "5.0.3",
+    "vitest-browser-react": "2.3.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

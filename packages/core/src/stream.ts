@@ -1,10 +1,10 @@
 import { Peaks } from './peaks'
-import type { StartMessage, WorkerMessage } from './worker'
+import type { FetchInit, StartMessage, WorkerMessage } from './worker'
 
 export interface StreamOptions {
-  /** Samples per level-0 bucket. 256 at 44.1 kHz is ~5.8 ms, enough to zoom to a single word. */
+  /** Samples per level-0 bucket. Default 256: at 44.1 kHz, ~5.8 ms, enough to zoom to a single word. Ignored for `.peaks` files. */
   bucketSize?: number
-  /** How often the worker hands over new buckets while decoding. */
+  /** How often the worker hands over new buckets while decoding, in milliseconds. Default 50. */
   postEveryMs?: number
   /**
    * Files up to this many bytes are decoded whole with `decodeAudioData`, which is
@@ -12,6 +12,13 @@ export interface StreamOptions {
    * about eight minutes at 128 kbps. 0 streams everything.
    */
   wholeBelow?: number
+  /**
+   * Options for every request: `headers`, `credentials`, `mode`, `cache`,
+   * `referrer`, `referrerPolicy`, `integrity` and the rest of `RequestInit`, for
+   * signed URLs, cookies or auth headers. The streaming worker gets a copy, with
+   * the headers as a plain object. `signal` is ignored: `cancel()` aborts.
+   */
+  fetch?: RequestInit
 }
 
 export interface StreamStats {
@@ -28,8 +35,9 @@ export interface PeakStream {
   peaks: Peaks
   /** Resolves with milliseconds-to-first-buckets, the moment there is something to draw. */
   first: Promise<number>
-  /** Resolves once the whole file is decoded. */
+  /** Resolves once the whole file is decoded; rejects if it can't be fetched or decoded. */
   done: Promise<StreamStats>
+  /** Stops downloading and decoding. */
   cancel(): void
 }
 
@@ -51,6 +59,8 @@ export function streamPeaks(url: string, options: StreamOptions = {}): PeakStrea
   const peaks = new Peaks({ sampleRate: 44100, bucketSize })
   const absolute = new URL(url, location.href).href
   const abort = new AbortController()
+  const init: RequestInit = { ...options.fetch, signal: abort.signal }
+  const get = () => fetch(absolute, init)
   let worker: Worker | null = null
   let firstMs = 0
   let resolveFirst!: (ms: number) => void
@@ -80,7 +90,10 @@ export function streamPeaks(url: string, options: StreamOptions = {}): PeakStrea
         resolve(stats('webcodecs'))
       } else if (m.type === 'unsupported') {
         end()
-        whole(fetch(absolute, { signal: abort.signal }).then((r) => r.arrayBuffer())).then(resolve, reject)
+        whole(get().then((res) => {
+          if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`)
+          return res.arrayBuffer()
+        })).then(resolve, reject)
       } else {
         end()
         reject(new Error(m.message))
@@ -90,14 +103,14 @@ export function streamPeaks(url: string, options: StreamOptions = {}): PeakStrea
       end()
       reject(new Error(e.message))
     }
-    worker.postMessage({ url: absolute, bucketSize, postEveryMs: options.postEveryMs ?? 50 } satisfies StartMessage)
+    worker.postMessage({ url: absolute, bucketSize, postEveryMs: options.postEveryMs ?? 50, init: cloneable(options.fetch) } satisfies StartMessage)
   })
 
   // A .peaks file (peaks made ahead of time) is read as is. Otherwise the response
   // headers say how big the audio is: small files are read here and decoded whole;
   // for large ones this request is dropped and the worker streams.
   const done = /\.peaks(?:[?#]|$)/.test(absolute)
-    ? fetch(absolute, { signal: abort.signal }).then(async (res) => {
+    ? get().then(async (res) => {
         if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`)
         Peaks.decode(await res.arrayBuffer(), peaks)
         arrived()
@@ -105,7 +118,7 @@ export function streamPeaks(url: string, options: StreamOptions = {}): PeakStrea
       })
     : !wholeBelow
     ? stream()
-    : fetch(absolute, { signal: abort.signal }).then((res) => {
+    : get().then((res) => {
         if (!res.ok) throw new Error(`fetch ${url}: ${res.status}`)
         const size = Number(res.headers.get('content-length') ?? 0)
         if (size && size <= wholeBelow) return whole(res.arrayBuffer())
@@ -114,6 +127,13 @@ export function streamPeaks(url: string, options: StreamOptions = {}): PeakStrea
       })
 
   return { peaks, first, done, cancel: () => { abort.abort(); end() } }
+}
+
+/** What of a `RequestInit` can be posted to a worker: no signal, body or window, and headers as a plain object. */
+function cloneable(init: RequestInit | undefined): FetchInit | undefined {
+  if (!init) return undefined
+  const { signal: _signal, body: _body, window: _window, headers, ...rest } = init
+  return { ...rest, headers: Object.fromEntries(new Headers(headers)) }
 }
 
 /* ------------------------------------------------------------ whole-file decoding */

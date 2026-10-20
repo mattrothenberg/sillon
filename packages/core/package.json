@@ -1,20 +1,59 @@
 {
   "name": "@sillon/core",
-  "version": "0.0.0",
-  "description": "Streaming audio peaks: decode in a worker, draw before the file finishes downloading.",
+  "version": "0.1.0",
+  "description": "Waveform peaks for the browser: streams long MP3s, decodes short files whole, and reads ready-made .peaks files.",
+  "author": "Matt Rothenberg",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattrothenberg/sillon.git",
+    "directory": "packages/core"
+  },
+  "homepage": "https://sillon.mattrothenberg.com",
+  "bugs": {
+    "url": "https://github.com/mattrothenberg/sillon/issues"
+  },
+  "keywords": [
+    "audio",
+    "waveform",
+    "peaks",
+    "mp3",
+    "webcodecs"
+  ],
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts",
-    "./mp3": "./src/mp3.ts"
+    ".": {
+      "@sillon/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./mp3": {
+      "@sillon/source": "./src/mp3.ts",
+      "types": "./dist/mp3.d.ts",
+      "default": "./dist/mp3.js"
+    },
+    "./package.json": "./package.json"
   },
+  "files": [
+    "dist",
+    "src"
+  ],
   "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "typecheck": "tsc -p .",
     "test": "node --test test/*.test.ts"
   },
   "devDependencies": {
+    "@arethetypeswrong/core": "^0.18.5",
+    "publint": "^0.3.25",
+    "tsdown": "^0.23.1",
     "typescript": "^7.0.2",
     "vite": "^8.3.4"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
   }
 }

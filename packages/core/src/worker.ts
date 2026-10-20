@@ -8,7 +8,10 @@ const DECODER_DELAY = 529
 // If no frame header shows up in this many bytes, it isn't an MP3.
 const SNIFF_BYTES = 64 * 1024
 
-export interface StartMessage { url: string; bucketSize: number; postEveryMs: number }
+/** A `RequestInit` that survives `postMessage`: headers as a plain object, no signal or body. */
+export type FetchInit = Omit<RequestInit, 'signal' | 'body' | 'window' | 'headers'> & { headers?: Record<string, string> }
+
+export interface StartMessage { url: string; bucketSize: number; postEveryMs: number; init?: FetchInit }
 
 export type WorkerMessage =
   | { type: 'meta'; sampleRate: number; channels: number; expected: number }
@@ -23,10 +26,11 @@ self.onmessage = (e: MessageEvent<StartMessage>) => {
   run(e.data).catch((err) => send({ type: 'error', message: String(err?.message ?? err) }))
 }
 
-async function run({ url, bucketSize, postEveryMs }: StartMessage) {
+async function run({ url, bucketSize, postEveryMs, init }: StartMessage) {
   const t0 = performance.now()
   if (typeof AudioDecoder === 'undefined') return send({ type: 'unsupported', reason: 'no WebCodecs AudioDecoder' })
-  const res = await fetch(url)
+  // No abort signal needed: cancel() terminates the worker, which ends the request.
+  const res = await fetch(url, init)
   if (!res.ok || !res.body) throw new Error(`fetch ${url}: ${res.status}`)
   const totalBytes = Number(res.headers.get('content-length') ?? 0)
   const reader = res.body.getReader()
@@ -46,6 +50,13 @@ async function run({ url, bucketSize, postEveryMs }: StartMessage) {
   let skip = 0, limit = Infinity
   // Samples per MP3 frame, to spot a decoder that trims its own delay (see onOutput).
   let frameSamples = 0, firstOutput = true
+
+  // Grows `out` as needed: a bucket can complete when it's exactly full, both
+  // mid-stream and for the last partial bucket after the decoder flushes.
+  const push = (v: number) => {
+    if (n === out.length) { const g = new Float32Array(n * 2); g.set(out); out = g }
+    out[n++] = v
+  }
 
   const flush = () => {
     if (!n) return
@@ -75,8 +86,7 @@ async function run({ url, bucketSize, postEveryMs }: StartMessage) {
         if (v > cur) cur = v
       }
       if (++curCount === bucketSize) {
-        if (n === out.length) { const g = new Float32Array(n * 2); g.set(out); out = g }
-        out[n++] = cur
+        push(cur)
         cur = 0
         curCount = 0
       }
@@ -138,7 +148,7 @@ async function run({ url, bucketSize, postEveryMs }: StartMessage) {
   if (!decoder) return send({ type: 'unsupported', reason: 'not an MP3 stream' })
   await decoder.flush()
   decoder.close()
-  if (curCount) out[n++] = cur
+  if (curCount) push(cur)
   flush()
   send({ type: 'done', samples: samplesOut, ms: performance.now() - t0 })
 }

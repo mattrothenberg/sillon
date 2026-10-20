@@ -4,8 +4,10 @@ const BR1 = [0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320]
 const BR2 = [0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160]
 const SR = [44100, 48000, 32000]
 
+/** One MP3 frame's header: length in bytes, Hz, 1 or 2 channels, samples per frame (1152 or 576), bits per second. */
 export interface Frame { len: number; sampleRate: number; channels: number; samples: number; bitrate: number }
 
+/** Reads the MPEG-1/2/2.5 Layer III frame header at `b[i]`, or null if there isn't a valid one. */
 export function parseHeader(b: Uint8Array, i: number): Frame | null {
   if (b[i] !== 0xff || (b[i + 1] & 0xe0) !== 0xe0) return null
   const ver = (b[i + 1] >> 3) & 3 // 3 = MPEG1, 2 = MPEG2, 0 = MPEG2.5
@@ -29,6 +31,7 @@ export function id3Size(b: Uint8Array): number {
   return 10 + size + (b[5] & 0x10 ? 10 : 0)
 }
 
+/** From a Xing/Info header: the frame count it records (0 if none), and encoder delay and padding in samples (0 without a LAME tag). */
 export interface Gapless { frames: number; delay: number; padding: number }
 
 /**
