@@ -38,10 +38,10 @@ export function useSitePlayer(src: string, where: string): Player {
   return player
 }
 
-export function PlayButton({ player, label }: { player: Player; label: string }) {
+export function PlayButton({ player, label, disabled }: { player: Player; label: string; disabled?: boolean }) {
   const { playing } = usePlayerState(player)
   return (
-    <button className={play} onClick={() => player.toggle()} aria-label={`${playing ? 'Pause' : 'Play'} ${label}`}>
+    <button className={`${play} disabled:cursor-default disabled:opacity-30`} onClick={() => player.toggle()} disabled={disabled} aria-label={`${playing ? 'Pause' : 'Play'} ${label}`}>
       {playing ? (
         <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden><rect x="3" y="2" width="3.5" height="12" rx="1" /><rect x="9.5" y="2" width="3.5" height="12" rx="1" /></svg>
       ) : (

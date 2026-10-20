@@ -5,9 +5,10 @@ import { ToggleGroup } from '@base-ui/react/toggle-group'
 
 // One pill-shaped row of choices, in two roles: tabs when each choice shows a different
 // demo (Looks), a toggle group when it only sets a value (Seg).
-const row = 'inline-flex gap-0.5 rounded-full bg-plate p-[3px]'
+// Scrolls sideways on its own when the choices are wider than the screen, rather than widening the page.
+const row = 'inline-flex max-w-full gap-0.5 overflow-x-auto rounded-full bg-plate p-[3px] [scrollbar-width:none]'
 const choice = (small?: boolean) =>
-  `cursor-pointer rounded-full border-0 bg-transparent text-ink-2 hover:text-ink ${small ? 'px-[11px] py-[3px] text-[13px]/[1.4]' : 'px-3.5 py-[5px] text-[14px]/[1.4]'}`
+  `shrink-0 cursor-pointer whitespace-nowrap rounded-full border-0 bg-transparent text-ink-2 hover:text-ink ${small ? 'px-[11px] py-[3px] text-[13px]/[1.4]' : 'px-3.5 py-[5px] text-[14px]/[1.4] tiny:px-2.5 tiny:text-[13px]/[1.4]'}`
 
 interface Option<T> { value: T; label: ReactNode }
 

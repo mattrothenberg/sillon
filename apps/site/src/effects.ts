@@ -53,16 +53,26 @@ const lookSource = (l: ParticleLook) => [
 
 /** The colors Waveform.GL reads, as custom properties on the root. */
 export const GL_COLORS = '[--wave-color:var(--color-track)] [--wave-progress:var(--color-ink)]'
+/** The Effects demo's Root: its height and GL colors. */
+export const EFFECT_ROOT = `h-28 ${GL_COLORS}`
+/** The Effects demo's bars: wide and rounded, with quiet passages pushed down. */
+export const EFFECT_GEOMETRY = { barWidth: 6, barGap: 3, barRadius: 3, contrast: 2 } as const
+const PARTICLES_SRC = 'https://github.com/mattrothenberg/sillon/blob/main/apps/site/src/islands/Particles.tsx'
 
 /** The JSX shown for an effect, matching what the demo renders. */
 export function effectJsx(e: Effect): string {
   const x = EFFECTS[e]
+  const g = EFFECT_GEOMETRY
   const lines = [
-    x.particles ? `${lookSource(x.particles)}\n` : '',
+    x.particles ? `// Particles is this site's component, not part of @sillon/react:\n// ${PARTICLES_SRC}\n${lookSource(x.particles)}\n` : '',
     `<Waveform.Root`,
     `  peaks={peaks}`,
     `  player={player}`,
-    `  className="${GL_COLORS}"`,
+    `  barWidth={${g.barWidth}}`,
+    `  barGap={${g.barGap}}`,
+    `  barRadius={${g.barRadius}}`,
+    `  contrast={${g.contrast}}`,
+    `  className="${EFFECT_ROOT}"`,
     `>`,
     `  <Waveform.GL${x.glsl ? ` fragment={${e === 'embers' ? 'afterglow' : e}}` : ''} />`,
     x.particles ? `  <Particles look={${lookName(x.particles)}} />` : '',

@@ -126,7 +126,7 @@ const TILES: Tile[] = [
   },
   {
     name: 'Visualizer',
-    desc: 'Moves with the sound as it plays.',
+    desc: 'The live spectrum, as rays around a circle.',
     size: 'tall',
     visual: (c) => (
       <div className="mx-auto aspect-square w-[min(100%,220px)]">

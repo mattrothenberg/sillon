@@ -3,7 +3,7 @@
 // library's own barsPath, so the client draws the same thing in the same place.
 import { readFileSync } from 'node:fs'
 import { Peaks } from '@sillon/core'
-import { barsPath, fitBars, type WaveformState } from '@sillon/react'
+import { WaveformStore, barsPath, fitBars, type WaveformState } from '@sillon/react'
 import { peaksOfShape, type Shape } from '../shape'
 
 /** Reads a .peaks file from public/ and reduces it to about `n` values (each the loudest of its span). */
@@ -29,10 +29,12 @@ export interface Geometry { width: number; height: number; bars: number; barWidt
  */
 export function silhouette(shape: Shape, g: Geometry): string {
   const peaks = peaksOfShape(shape)
-  const state = {
-    ...g, ...fitBars(g.width, g.bars, g.barWidth, g.barGap), minBarHeight: 1, normalize: true, smoothing: 0, peaks, player: null,
-    start: 0, end: peaks.duration, hover: null, gain: peaks.max ? 1 / peaks.max : 1,
-    progressive: false, reveal: false, revealed: Infinity,
-  } as unknown as WaveformState
+  // The store's defaults first, so any field this file doesn't set is what the client uses too.
+  const state: WaveformState = {
+    ...new WaveformStore().state,
+    align: g.align, contrast: g.contrast, barRadius: g.barRadius, width: g.width, height: g.height,
+    ...fitBars(g.width, g.bars, g.barWidth, g.barGap),
+    peaks, end: peaks.duration, gain: peaks.max ? 1 / peaks.max : 1,
+  }
   return barsPath(state)
 }

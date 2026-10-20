@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Waveform, usePeaks } from '@sillon/react'
 import { CodeStack, Deck, Looks, useSitePlayer } from '../ui'
 import { MUSIC, MUSIC_PEAKS, MUSIC_TITLE } from '../music'
-import { EFFECTS, GL_COLORS, type Effect } from '../effects'
+import { EFFECTS, EFFECT_GEOMETRY, EFFECT_ROOT, type Effect } from '../effects'
 import { demoCode, hoverLine, meta, skeleton } from '../cls'
 import { Particles } from './Particles'
 
@@ -24,7 +24,7 @@ export function Effects({ code }: { code: EffectsCode }) {
       {/* Room above the bars for the sparks. */}
       <div className="pt-14">
         <Deck player={player} label={MUSIC_TITLE}>
-          <Waveform.Root peaks={peaks} player={player} barWidth={6} barGap={3} barRadius={3} contrast={2} className={GL_COLORS} style={{ height: 112 }} aria-label={`Seek in ${MUSIC_TITLE}`}>
+          <Waveform.Root peaks={peaks} player={player} {...EFFECT_GEOMETRY} className={EFFECT_ROOT} aria-label={`Seek in ${MUSIC_TITLE}`}>
             <Waveform.Skeleton className={skeleton} />
             <Waveform.GL fragment={x.glsl ?? undefined} />
             {x.particles && <Particles key={effect} look={x.particles} />}

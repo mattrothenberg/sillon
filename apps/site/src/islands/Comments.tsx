@@ -3,7 +3,7 @@ import { Popover } from '@base-ui/react/popover'
 import { Waveform, formatTime, timeToX, useActive, useGroups, usePeaks, useWaveform, type Player } from '@sillon/react'
 import { Deck, useSitePlayer } from '../ui'
 import { MUSIC, MUSIC_PEAKS, MUSIC_TITLE } from '../music'
-import { COMMENT, COMMENTS_GAP as GAP } from '../snippets'
+import { COMMENT, COMMENTS_GAP as GAP, HEIGHT } from '../snippets'
 import { avatar, bubble, btn, card, count, cursor, face as faceLook, meta, pin, ring as RING, shape, skeleton } from '../cls'
 
 export type Note = { id: number; time: number; who: string; text: string }
@@ -47,29 +47,29 @@ export function Comments() {
   return (
     // Room for bubbles above the bars and avatars below them.
     <div className="pt-12">
-        <Deck player={player} label={MUSIC_TITLE}>
-          <Waveform.Root peaks={peaks} player={player} barWidth={2} barGap={1} barRadius={1} contrast={2} className="mb-10" style={{ height: 96 }} aria-label={`Seek in ${MUSIC_TITLE}`}>
-            <Waveform.Skeleton className={skeleton} />
-            <Waveform.Shape className={shape}>
-              <Waveform.Track className={COMMENT.track} />
-              <Waveform.Progress className={COMMENT.played} />
-            </Waveform.Shape>
-            <Waveform.Cursor className={cursor} />
-            <Pins notes={notes} player={player} />
-          </Waveform.Root>
-        </Deck>
-        <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
-          <form className="flex min-w-0 max-w-[440px] flex-1 gap-2" onSubmit={post}>
-            <input
-              className="min-w-0 flex-1 rounded-full border-0 bg-plate px-3.5 py-1.5 text-[14px] text-ink placeholder:text-ink-3"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              placeholder="Add a comment at the playhead"
-              aria-label="Comment"
-            />
-            <button className={btn} disabled={!draft.trim()}>Post</button>
-          </form>
-        </div>
+      <Deck player={player} label={MUSIC_TITLE}>
+        <Waveform.Root peaks={peaks} player={player} barWidth={2} barGap={1} barRadius={1} contrast={2} className={`mb-10 ${HEIGHT.comments}`} aria-label={`Seek in ${MUSIC_TITLE}`}>
+          <Waveform.Skeleton className={skeleton} />
+          <Waveform.Shape className={shape}>
+            <Waveform.Track className={COMMENT.track} />
+            <Waveform.Progress className={COMMENT.played} />
+          </Waveform.Shape>
+          <Waveform.Cursor className={cursor} />
+          <Pins notes={notes} player={player} />
+        </Waveform.Root>
+      </Deck>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+        <form className="flex min-w-0 max-w-[440px] flex-1 gap-2" onSubmit={post}>
+          <input
+            className="min-w-0 flex-1 rounded-full border-0 bg-plate px-3.5 py-1.5 text-[14px] text-ink placeholder:text-ink-3"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            placeholder="Add a comment at the playhead"
+            aria-label="Comment"
+          />
+          <button className={btn} disabled={!draft.trim()}>Post</button>
+        </form>
+      </div>
     </div>
   )
 }

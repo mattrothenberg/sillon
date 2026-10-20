@@ -10,9 +10,10 @@ export function Code({ html }: { html: string }) {
  */
 export function CodeStack<K extends string>({ code, current }: { code: Record<K, string[]>; current: K }) {
   return (
-    <div className="grid">
+    // minmax(0, 1fr) and min-w-0: a long line scrolls inside its <pre> instead of widening the page.
+    <div className="grid grid-cols-[minmax(0,1fr)]">
       {(Object.keys(code) as K[]).map((k) => (
-        <div key={k} className="invisible col-start-1 row-start-1 grid content-start gap-3 data-on:visible" data-on={k === current ? '' : undefined} aria-hidden={k !== current}>
+        <div key={k} className="invisible col-start-1 row-start-1 grid min-w-0 grid-cols-[minmax(0,1fr)] content-start gap-3 data-on:visible" data-on={k === current ? '' : undefined} aria-hidden={k !== current}>
           {code[k].map((html, i) => <Code key={i} html={html} />)}
         </div>
       ))}

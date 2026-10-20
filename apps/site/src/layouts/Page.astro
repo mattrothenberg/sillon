@@ -2,13 +2,15 @@
 import '../global.css'
 import { markSvg } from '../lib/mark'
 import { meta, tip } from '../cls'
-import { DevMusic } from '../islands/DevMusic'
 
 interface Props { title: string; description: string; page: 'home' | 'why' }
 const { title, description, page } = Astro.props
 
 const wordmarkTip = `${tip} pointer-events-none absolute top-[calc(100%+12px)] left-0 z-30 w-max scale-96 opacity-0 origin-top-left
   group-hover:scale-100 group-hover:opacity-100 group-hover:delay-250 group-focus-visible:scale-100 group-focus-visible:opacity-100 group-focus-visible:delay-250`
+// Social cards need absolute URLs, so they use `site` from astro.config.mjs once it's set.
+const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path)
+const og = absolute('/og.png')
 const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[current=page]:text-ink narrow:text-[14px]'
 ---
 <!doctype html>
@@ -21,13 +23,19 @@ const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[curren
       // Apply a saved theme before first paint, so the page never flashes the wrong one.
       try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t } catch {}
     </script>
-    {import.meta.env.DEV && <script is:inline>
-      // Another version of the song is playing (dev only): hide the build-time bars, which are the piano's.
-      try { const m = localStorage.getItem('music'); if (m && m !== 'avril') document.documentElement.dataset.music = m } catch {}
-    </script>}
     <slot name="head" />
     <title>{title}</title>
     <meta name="description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="sillon" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {Astro.site && <meta property="og:url" content={absolute(Astro.url.pathname)} />}
+    <meta property="og:image" content={og} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="sillon: the record mark, the name, and a waveform with comments under it." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="preload" href="/fonts/InstrumentSans.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/SchibstedGrotesk-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
@@ -63,32 +71,42 @@ const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[curren
 
     <slot />
 
-    {import.meta.env.DEV && <DevMusic client:only="react" />}
-
     <script>
       // Focus rings once someone moves focus with Tab; hidden again on the next click.
       addEventListener('keydown', (e) => { if (e.key === 'Tab') document.documentElement.dataset.keyboard = '' })
       addEventListener('pointerdown', () => { delete document.documentElement.dataset.keyboard })
 
-      // Theme: starts on the system's, one click flips to the other, saved per browser.
+      // Theme: follows the system's. A click picks the other one, saved per browser; picking the
+      // system's again, or changing the system's, goes back to following it.
       const toggle = document.getElementById('theme-toggle')!
       const root = document.documentElement
-      const isDark = () => root.dataset.theme === 'dark' || (root.dataset.theme !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+      const system = matchMedia('(prefers-color-scheme: dark)')
+      const isDark = () => root.dataset.theme === 'dark' || (root.dataset.theme !== 'light' && system.matches)
       const sync = () => {
         const dark = isDark()
         toggle.toggleAttribute('data-dark', dark)
         toggle.setAttribute('aria-label', dark ? 'Switch to light theme' : 'Switch to dark theme')
         toggle.title = dark ? 'Light' : 'Dark'
       }
+      const follow = () => {
+        delete root.dataset.theme
+        try { localStorage.removeItem('theme') } catch {}
+      }
       toggle.addEventListener('click', () => {
-        const t = isDark() ? 'light' : 'dark'
-        root.dataset.theme = t
-        try { localStorage.setItem('theme', t) } catch {}
+        const dark = !isDark()
+        if (dark === system.matches) follow()
+        else {
+          const t = dark ? 'dark' : 'light'
+          root.dataset.theme = t
+          try { localStorage.setItem('theme', t) } catch {}
+        }
         sync()
       })
+      system.addEventListener('change', () => { follow(); sync() })
+      // A saved theme equal to the system's is dropped.
+      if (root.dataset.theme && (root.dataset.theme === 'dark') === system.matches) follow()
       sync()
 
-      // Copy buttons.
       document.querySelectorAll<HTMLButtonElement>('[data-copy]').forEach((b) => b.addEventListener('click', () => {
         navigator.clipboard?.writeText(b.dataset.copy!).then(() => {
           b.textContent = 'Copied'

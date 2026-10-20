@@ -1,6 +1,5 @@
 import { useMemo, useSyncExternalStore } from 'react'
-import { Peaks, usePeaks } from '@sillon/react'
-import { DEFAULT_MUSIC, MUSIC, MUSIC_PEAKS } from './music'
+import { Peaks } from '@sillon/react'
 
 /**
  * A song's peaks, small enough to put in the page: the hero and the rail draw
@@ -13,11 +12,9 @@ export const shapeDuration = (s: Shape) => (s.values.length * s.bucketSize) / s.
 
 export const peaksOfShape = (s: Shape) => Peaks.from(s.values, { sampleRate: s.sampleRate, bucketSize: s.bucketSize })
 
-/** The song's peaks from its embedded shape, or fetched when a different version is playing (dev only). */
-export function useSongPeaks(shape: Shape): Peaks | null {
-  const embedded = useMemo(() => peaksOfShape(shape), [shape])
-  const fetched = usePeaks(MUSIC === DEFAULT_MUSIC ? null : MUSIC_PEAKS)
-  return MUSIC === DEFAULT_MUSIC ? embedded : fetched.peaks
+/** The song's peaks from its embedded shape: no request, ready on the first render. */
+export function useSongPeaks(shape: Shape): Peaks {
+  return useMemo(() => peaksOfShape(shape), [shape])
 }
 
 /**

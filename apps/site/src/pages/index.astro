@@ -1,10 +1,11 @@
 ---
 import Page from '../layouts/Page.astro'
 import { markSvg } from '../lib/mark'
-import { statSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
+import { Peaks } from '@sillon/core'
 import { highlight } from '../lib/highlight'
 import {
-  USAGE_JSX, VISUALIZER_JSX, REGIONS_JSX, ZOOM_JSX, COMMENTS_JSX,
+  USAGE_JSX, VISUALIZER_JSX, REGIONS_JSX, ZOOM_JSX, COMMENTS_JSX, RECORD_JSX,
   THEMES, COMMENT, stylingJsx, type Theme,
 } from '../snippets'
 import pattern from '../../../../scripts/strudel/avril.strudel.js?raw'
@@ -22,6 +23,7 @@ import { Visualizer, type VisualizerCode } from '../islands/Visualizer'
 import { Regions } from '../islands/Regions'
 import { Comments } from '../islands/Comments'
 import { Zoom } from '../islands/Zoom'
+import { Recording } from '../islands/Recording'
 import { Credit } from '../islands/Credit'
 import { avatar, chapterN, col, demoCode, face, lede, ledeText, ledeTitle, meta, pageEnd, pin, play, ring, section, transport } from '../cls'
 
@@ -39,9 +41,12 @@ const effectsCode = Object.fromEntries(
 ) as EffectsCode
 
 // The Long files demo reads peaks made ahead of time; its copy compares the two sizes.
-const size = (path: string) => statSync(`${process.cwd()}/${path}`).size
-const hourPeaksKB = Math.round(size('public/audio/hour.peaks') / 1024)
-const hourAudioMB = Math.round(size('../bench/public/audio/hour.mp3') / 1024 / 1024)
+// The hour's MP3 isn't in the repo (57 MB), so its size is worked out from the peaks'
+// duration at the 128 kbps it was encoded at (scripts/gen-audio.sh).
+const hourPeaksPath = `${process.cwd()}/public/audio/hour.peaks`
+const hourPeaksKB = Math.round(statSync(hourPeaksPath).size / 1024)
+const hourSeconds = Peaks.decode(new Uint8Array(readFileSync(hourPeaksPath)).buffer).duration
+const hourAudioMB = Math.round((hourSeconds * 128_000) / 8 / 1024 / 1024)
 
 // The song's bars, drawn into the page at build time for the rail, at a desktop and a
 // phone width; the island then draws the same bars from the same shape. The hero's bars
@@ -55,8 +60,7 @@ const rail = [sil(RAIL, 978, BARS.rail.wide), sil(RAIL, 324, BARS.rail.narrow)]
 // Numbered like the rail, which reads the same list off the page.
 const n = (i: number) => String(i).padStart(2, '0')
 
-// A dev music version other than the piano hides the build-time bars, which are the piano's.
-const silSvg = 'size-full fill-track in-data-music:invisible'
+const silSvg = 'size-full fill-track'
 ---
 <Page title="sillon" description="Headless waveform components for React." page="home">
     <section class="pt-6 [--wave:clamp(150px,24vh,230px)]" aria-labelledby="hero-title">
@@ -114,7 +118,7 @@ const silSvg = 'size-full fill-track in-data-music:invisible'
       </Rail>
     </div>
 
-    {/* No footer: the page just ends, with room to breathe below the last section. */}
+    {/* No footer: pageEnd adds the space below the last section. */}
     {/* The rail's own rule divides the first section from the hero. */}
     <main class={`${col} ${pageEnd} [&>section:first-child]:mt-0 [&>section:first-child]:border-t-0`}>
       <section id="usage" class={section} data-chapter="Usage">
@@ -125,9 +129,8 @@ const silSvg = 'size-full fill-track in-data-music:invisible'
         </div>
         <div data-code set:html={highlight(USAGE_JSX, 'tsx')} />
         <p class="mt-5 mb-8 max-w-text text-ink-2 [&_code]:text-ink">
-          Already have a player, or only need the picture? Use <code>usePeaks</code> and <code>usePlayer</code> on
-          their own. The waveform appears once the whole file is read; pass <code>progressive</code> to draw it while a
-          long file streams in.
+          To read a <code>.peaks</code> file, or to draw a waveform with no playback, use <code>usePeaks</code> and <code>usePlayer</code> separately.
+          The waveform appears once the whole file is read; pass <code>progressive</code> to draw it while a long file streams in.
         </p>
       </section>
 
@@ -135,7 +138,7 @@ const silSvg = 'size-full fill-track in-data-music:invisible'
         <div class={lede}>
           <span class={chapterN}>{n(2)}</span>
           <h2 class={ledeTitle}>Components</h2>
-          <p class={ledeText}>Each part does one job, and they all follow the same player. Use the ones you need, in whatever layout you like. Press play and every tile below moves together.</p>
+          <p class={ledeText}>Each part does one job, and they all follow the same player. Press play and every tile below moves together.</p>
         </div>
         <Parts client:only="react"><div slot="fallback" style="height: 720px" aria-hidden="true"></div></Parts>
       </section>
@@ -191,10 +194,21 @@ const silSvg = 'size-full fill-track in-data-music:invisible'
         <div class={lede}>
           <span class={chapterN}>{n(8)}</span>
           <h2 class={ledeTitle}>Long files</h2>
-          <p class={ledeText}>An hour-long recording, from peaks made ahead of time: a {hourPeaksKB} kB <code>.peaks</code> file instead of {hourAudioMB} MB of audio. Pinch or scroll sideways to zoom, drag to pan. <code>store.setView(start, end)</code> sets the visible range.</p>
+          <p class={ledeText}>An hour-long recording, from peaks made ahead of time: a {hourPeaksKB} kB <code>.peaks</code> file instead of {hourAudioMB} MB of audio. Pinch to zoom (Ctrl+scroll with a mouse); scroll sideways or drag to pan. <code>useZoom</code> adds these gestures, and <code>store.setView(start, end)</code> sets the visible range.</p>
+          <p class={ledeText}>Decoding and the <code>.peaks</code> format live in <code>@sillon/core</code>, which installs with <code>@sillon/react</code> and also works without React: make <code>.peaks</code> files with <code>Peaks.encode()</code>, or load peaks for your own drawing with <code>streamPeaks()</code>.</p>
         </div>
         <Zoom client:only="react"><div slot="fallback" style="height: 300px" aria-hidden="true"></div></Zoom>
         <div class={demoCode}><div data-code set:html={highlight(ZOOM_JSX, 'tsx')} /></div>
+      </section>
+
+      <section id="recording" class={section} data-chapter="Recording">
+        <div class={lede}>
+          <span class={chapterN}>{n(9)}</span>
+          <h2 class={ledeTitle}>Recording</h2>
+          <p class={ledeText}><code>useRecorder</code> records from the microphone and returns peaks that fill in as you speak, so the waveform draws while you record. When you stop, it hands back the audio to play or upload, and the peaks are complete.</p>
+        </div>
+        <Recording client:only="react"><div slot="fallback" style="height: 190px" aria-hidden="true"></div></Recording>
+        <div class={demoCode}><div data-code set:html={highlight(RECORD_JSX, 'tsx')} /></div>
       </section>
     </main>
 </Page>
