@@ -25,6 +25,7 @@ import { Comments } from '../islands/Comments'
 import { Zoom } from '../islands/Zoom'
 import { Recording } from '../islands/Recording'
 import { Credit } from '../islands/Credit'
+import { GITHUB_URL, githubMark } from '../lib/github'
 import { avatar, chapterN, col, demoCode, face, lede, ledeText, ledeTitle, meta, pageEnd, pin, play, ring, section, transport } from '../cls'
 
 const INSTALL = 'npm install @sillon/react'
@@ -86,14 +87,20 @@ const silSvg = 'size-full fill-track'
       <div class={`${col} mt-[72px] narrow:mt-14`}>
         <h1 id="hero-title" class="text-[40px]/[1.12] font-semibold tracking-[-0.02em] text-balance text-ink narrow:text-[32px]">Headless waveform components for React.</h1>
         <p class="mt-6 max-w-text text-[19px]/[1.55] text-ink-2 narrow:text-[17px]">Peaks, playback, regions, markers and a visualizer, as parts you compose and style with your own CSS.</p>
-        <div class="mt-8 flex w-fit max-w-full items-center justify-between gap-3 rounded-[10px] bg-plate py-2 pr-2 pl-4">
-          <code class="overflow-x-auto text-[14px] whitespace-nowrap"><span class="text-ink-3" aria-hidden="true">$ </span>{INSTALL}</code>
-          <button
-            class="min-w-16 cursor-pointer rounded-[7px] border-0 bg-card px-2.5 py-1 font-mono text-[13px]/[1.5] text-ink-2 shadow-lift hover:text-ink"
-            type="button"
-            data-copy={INSTALL}
-            aria-label="Copy install command"
-          >Copy</button>
+        <div class="mt-8 flex flex-wrap items-stretch gap-3">
+          <div class="flex w-fit max-w-full items-center justify-between gap-3 rounded-[10px] bg-plate py-2 pr-2 pl-4">
+            <code class="overflow-x-auto text-[14px] whitespace-nowrap"><span class="text-ink-3" aria-hidden="true">$ </span>{INSTALL}</code>
+            <button
+              class="min-w-16 cursor-pointer rounded-[7px] border-0 bg-card px-2.5 py-1 font-mono text-[13px]/[1.5] text-ink-2 shadow-lift hover:text-ink"
+              type="button"
+              data-copy={INSTALL}
+              aria-label="Copy install command"
+            >Copy</button>
+          </div>
+          <a class="inline-flex items-center gap-2 rounded-[10px] border border-rule px-4 text-[15px] text-ink-2 no-underline hover:bg-plate hover:text-ink" href={GITHUB_URL}>
+            <Fragment set:html={githubMark(17)} />
+            GitHub
+          </a>
         </div>
       </div>
     </section>

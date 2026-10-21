@@ -1,6 +1,7 @@
 ---
 import '../global.css'
 import { markSvg } from '../lib/mark'
+import { GITHUB_URL, githubMark } from '../lib/github'
 import { meta, tip } from '../cls'
 
 interface Props { title: string; description: string; page: 'home' | 'why' | 'none' }
@@ -11,6 +12,7 @@ const wordmarkTip = `${tip} pointer-events-none absolute top-[calc(100%+12px)] l
 // Social cards need absolute URLs, so they use `site` from astro.config.mjs once it's set.
 const absolute = (path: string) => (Astro.site ? new URL(path, Astro.site).href : path)
 const og = absolute('/og.png')
+const iconButton = 'grid size-9 flex-none place-items-center rounded-full text-ink-2 hover:bg-plate hover:text-ink'
 const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[current=page]:text-ink narrow:text-[14px]'
 ---
 <!doctype html>
@@ -59,15 +61,20 @@ const navLink = 'text-[15px] text-ink-2 no-underline hover:text-ink aria-[curren
           <a class={navLink} href="/" aria-current={page === 'home' ? 'page' : undefined}>Components</a>
           <a class={navLink} href="/why" aria-current={page === 'why' ? 'page' : undefined}>Why sillon</a>
         </nav>
-        <button
-          class="-my-2 -mr-2 grid size-9 flex-none cursor-pointer place-items-center rounded-full border-0 bg-transparent p-0 text-ink-2 hover:bg-plate hover:text-ink"
-          id="theme-toggle"
-          type="button"
-        >
-          {/* The icon follows the theme in CSS alone, so it's right before any script runs: a moon in light, a sun in dark. */}
-          <svg class="hidden dark:block" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="3.5" /><path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.3 4.3l1.1 1.1M14.6 14.6l1.1 1.1M4.3 15.7l1.1-1.1M14.6 5.4l1.1-1.1" /></g></svg>
-          <svg class="dark:hidden" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg>
-        </button>
+        <div class="-my-2 -mr-2 flex items-center gap-1">
+          <a class={iconButton} href={GITHUB_URL} aria-label="sillon on GitHub" title="GitHub">
+            <Fragment set:html={githubMark(19)} />
+          </a>
+          <button
+            class={`${iconButton} cursor-pointer border-0 bg-transparent p-0`}
+            id="theme-toggle"
+            type="button"
+          >
+            {/* The icon follows the theme in CSS alone, so it's right before any script runs: a moon in light, a sun in dark. */}
+            <svg class="hidden dark:block" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="10" cy="10" r="3.5" /><path d="M10 2v1.5M10 16.5V18M2 10h1.5M16.5 10H18M4.3 4.3l1.1 1.1M14.6 14.6l1.1 1.1M4.3 15.7l1.1-1.1M14.6 5.4l1.1-1.1" /></g></svg>
+            <svg class="dark:hidden" viewBox="0 0 20 20" width="20" height="20" aria-hidden="true"><path d="M16.5 12.2A7 7 0 0 1 7.8 3.5a7 7 0 1 0 8.7 8.7Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" /></svg>
+          </button>
+        </div>
       </div>
     </header>
 
