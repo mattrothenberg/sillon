@@ -14,8 +14,8 @@ const versusWho = `${meta} mb-2 block`
   <section class={`${col} pt-[72px] narrow:pt-12`} aria-labelledby="doc-title">
     <h1 id="doc-title" class="text-[40px]/[1.12] font-semibold tracking-[-0.02em] text-balance narrow:text-[32px]">Why sillon</h1>
     <p class="mt-5 max-w-text text-[19px]/[1.55] text-ink-2 narrow:text-[17px]">
-      sillon and wavesurfer.js both draw audio waveforms in the browser. They differ in how the bars are styled, how your
-      own components sit on a waveform, what you can draw with it, and how comments are grouped.
+      sillon and wavesurfer.js both draw audio waveforms in the browser. The differences are in how they style bars,
+      place components on a waveform, render custom graphics, and group comments.
     </p>
   </section>
 
@@ -24,7 +24,7 @@ const versusWho = `${meta} mb-2 block`
       <div class={lede}>
         <span class={chapterN}>01</span>
         <h2 class={ledeTitle}>Styling</h2>
-        <p class={ledeText}>wavesurfer.js draws its bars on a canvas, so colors are options passed in JavaScript, and changing them, for a dark theme for example, means calling <code>setOptions</code>. sillon draws the bars as a stencil over two elements, <code>Waveform.Track</code> and <code>Waveform.Progress</code>; what shows through is their background, set with classes or CSS.</p>
+        <p class={ledeText}>wavesurfer.js draws bars on a canvas, so colors are JavaScript options. Changing them for a dark theme, for example, requires <code>setOptions</code>. sillon uses the bars as a stencil over <code>Waveform.Track</code> and <code>Waveform.Progress</code>. Their CSS backgrounds show through.</p>
       </div>
       <HowStencil client:only="react"><div slot="fallback" class="h-[140px]" aria-hidden="true"></div></HowStencil>
       <div class={versus}>
@@ -37,7 +37,7 @@ const versusWho = `${meta} mb-2 block`
       <div class={lede}>
         <span class={chapterN}>02</span>
         <h2 class={ledeTitle}>Markers and regions</h2>
-        <p class={ledeText}>With <code>@wavesurfer/react</code>, markers and regions come from wavesurfer.js plugins, which create their own elements; their content is a string or a DOM element. In sillon, <code>Waveform.Marker</code> and <code>Waveform.Region</code> are React components, and what goes inside them is your own JSX.</p>
+        <p class={ledeText}>With <code>@wavesurfer/react</code>, wavesurfer.js plugins create the elements for markers and regions. Their content is a string or DOM element. In sillon, <code>Waveform.Marker</code> and <code>Waveform.Region</code> are React components that render your JSX.</p>
       </div>
       <div class={versus}>
         <div><span class={versusWho}>wavesurfer.js with @wavesurfer/react</span><div data-code set:html={highlight(WS_REACT, 'tsx')} /></div>
@@ -49,7 +49,7 @@ const versusWho = `${meta} mb-2 block`
       <div class={lede}>
         <span class={chapterN}>03</span>
         <h2 class={ledeTitle}>Effects that follow the music</h2>
-        <p class={ledeText}>wavesurfer.js's <code>renderFunction</code> draws the bars on a canvas when the waveform renders: on load, zoom and resize. sillon's <code>Waveform.GL</code> runs a few lines of GLSL for every bar on every frame while playing. The shader knows each bar's height, how long ago the playhead passed it, and how loud the song is right now. The <a href="/#effects">effects on the home page</a> are made this way.</p>
+        <p class={ledeText}>wavesurfer.js's <code>renderFunction</code> draws bars on a canvas when the waveform loads, zooms, or resizes. sillon's <code>Waveform.GL</code> runs GLSL for every bar on each frame during playback. The shader receives each bar's height, the time since the playhead passed it, and the song's current loudness. The <a href="/#effects">home-page effects</a> use this.</p>
       </div>
       <div class={versus}>
         <div><span class={versusWho}>wavesurfer.js</span><div data-code set:html={highlight(WS_RENDER, 'javascript')} /></div>
@@ -61,7 +61,7 @@ const versusWho = `${meta} mb-2 block`
       <div class={lede}>
         <span class={chapterN}>04</span>
         <h2 class={ledeTitle}>Comments that group as you zoom</h2>
-        <p class={ledeText}>On a long track, comments pile up at the same few pixels. With wavesurfer.js, merging the markers that would overlap, and splitting them again on its <code>zoom</code> event, is code you write. <code>useGroups</code> does both, and re-renders only when the grouping changes. The <a href="/#comments">comments on the home page</a> use it.</p>
+        <p class={ledeText}>On a long track, comments can end up at the same pixels. With wavesurfer.js, you write the code that merges overlapping markers and separates them again on its <code>zoom</code> event. <code>useGroups</code> handles both and re-renders only when the grouping changes. The <a href="/#comments">home-page comments</a> use it.</p>
       </div>
       <div class={versus}>
         <div><span class={versusWho}>sillon</span><div data-code set:html={highlight(SILLON_GROUPS, 'tsx')} /></div>

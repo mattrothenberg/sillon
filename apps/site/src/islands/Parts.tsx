@@ -74,7 +74,7 @@ const TILES: Tile[] = [
   },
   {
     name: 'Shape',
-    desc: 'Whatever you put inside shows through the bars.',
+    desc: 'Its contents show through the bars.',
     visual: (c) => (
       <Wave {...c}>
         <Waveform.Shape className={shape}>
@@ -126,7 +126,7 @@ const TILES: Tile[] = [
   },
   {
     name: 'Visualizer',
-    desc: 'The live spectrum, as rays around a circle.',
+    desc: 'The spectrum, shown as rays around a circle.',
     size: 'tall',
     visual: (c) => (
       <div className="mx-auto aspect-square w-[min(100%,220px)]">

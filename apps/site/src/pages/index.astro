@@ -86,7 +86,7 @@ const silSvg = 'size-full fill-track'
       </div>
       <div class={`${col} mt-[72px] narrow:mt-14`}>
         <h1 id="hero-title" class="text-[40px]/[1.12] font-semibold tracking-[-0.02em] text-balance text-ink narrow:text-[32px]">Headless waveform components for React.</h1>
-        <p class="mt-6 max-w-text text-[19px]/[1.55] text-ink-2 narrow:text-[17px]">Peaks, playback, regions, markers and a visualizer, as parts you compose and style with your own CSS.</p>
+        <p class="mt-6 max-w-text text-[19px]/[1.55] text-ink-2 narrow:text-[17px]">Build waveforms from peaks, playback, regions, markers, and a visualizer. Style every part with your own CSS.</p>
         <div class="mt-8 flex flex-wrap items-stretch gap-3">
           <div class="flex w-fit max-w-full items-center justify-between gap-3 rounded-[10px] bg-plate py-2 pr-2 pl-4">
             <code class="overflow-x-auto text-[14px] whitespace-nowrap"><span class="text-ink-3" aria-hidden="true">$ </span>{INSTALL}</code>
@@ -132,7 +132,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(1)}</span>
           <h2 class={ledeTitle}>Usage</h2>
-          <p class={ledeText}><code>useAudio</code> loads a file and returns its peaks and a player. Pass both to <code>Waveform.Root</code> and put the parts you want inside it.</p>
+          <p class={ledeText}><code>useAudio</code> loads a file and returns peaks and a player. Pass both to <code>Waveform.Root</code>, then add the parts you need.</p>
         </div>
         <div data-code set:html={highlight(USAGE_JSX, 'tsx')} />
         <p class="mt-5 mb-8 max-w-text text-ink-2 [&_code]:text-ink">
@@ -145,7 +145,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(2)}</span>
           <h2 class={ledeTitle}>Components</h2>
-          <p class={ledeText}>Each part does one job, and they all follow the same player. Press play and every tile below moves together.</p>
+          <p class={ledeText}>A waveform has separate parts for bars, progress, the cursor, and time. Use the parts you need. The tiles below all play the same song.</p>
         </div>
         <Parts client:only="react"><div slot="fallback" style="height: 720px" aria-hidden="true"></div></Parts>
       </section>
@@ -154,7 +154,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(3)}</span>
           <h2 class={ledeTitle}>Styling</h2>
-          <p class={ledeText}><code>Track</code> and <code>Progress</code> are clipped to the bars, so any CSS background works: a color, a gradient, a pattern or an image.</p>
+          <p class={ledeText}><code>Track</code> and <code>Progress</code> clip their backgrounds to the bars. Use a color, gradient, pattern, or image.</p>
         </div>
         <Styling client:only="react" code={stylingCode}><div slot="fallback" style="height: 560px" aria-hidden="true"></div></Styling>
       </section>
@@ -163,7 +163,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(4)}</span>
           <h2 class={ledeTitle}>Effects</h2>
-          <p class={ledeText}><code>Waveform.GL</code> takes a few lines of GLSL that know about the waveform and the music: each bar's height, how long ago the playhead passed it, and how loud the song is right now. The sparks and dust are a small component on the same data, from <code>useWaveform()</code>. Nothing moves until you press play.</p>
+          <p class={ledeText}><code>Waveform.GL</code> runs GLSL with each bar's height, the time since the playhead passed it, and the song's current loudness. The sparks and dust use the same data from <code>useWaveform()</code>. They start when you press play.</p>
         </div>
         <Effects client:only="react" code={effectsCode}><div slot="fallback" style="height: 560px" aria-hidden="true"></div></Effects>
       </section>
@@ -172,7 +172,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(5)}</span>
           <h2 class={ledeTitle}>Visualizer</h2>
-          <p class={ledeText}><code>Visualizer</code> draws the live spectrum of a player while it plays. It draws in the element's CSS <code>color</code>, so it follows your theme, dark mode included. Give it a <code>fragment</code> and it draws with WebGL instead, through your shader.</p>
+          <p class={ledeText}><code>Visualizer</code> draws a player's spectrum while it plays. By default, it uses the element's CSS <code>color</code>, including in dark mode. Pass a <code>fragment</code> to draw with WebGL and your shader instead.</p>
         </div>
         <Visualizer client:only="react" code={visualizerCode}><div slot="fallback" style="height: 500px" aria-hidden="true"></div></Visualizer>
       </section>
@@ -191,7 +191,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(7)}</span>
           <h2 class={ledeTitle}>Comments</h2>
-          <p class={ledeText}><code>Waveform.Marker</code> pins anything to a time. <code>useGroups</code> merges markers that would overlap, and <code>useActive</code> returns what the playhead just passed. Click an avatar to play from that comment, or a number to see everyone who commented there.</p>
+          <p class={ledeText}><code>Waveform.Marker</code> attaches any content to a time. <code>useGroups</code> combines markers that overlap, and <code>useActive</code> returns the item the playhead just passed. Click an avatar to play from its comment, or a number to see the comments at that point.</p>
         </div>
         <Comments client:only="react"><div slot="fallback" style="height: 300px" aria-hidden="true"></div></Comments>
         <div class={demoCode}><div data-code set:html={highlight(COMMENTS_JSX, 'tsx')} /></div>
@@ -201,8 +201,8 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(8)}</span>
           <h2 class={ledeTitle}>Long files</h2>
-          <p class={ledeText}>An hour-long recording, from peaks made ahead of time: a {hourPeaksKB} kB <code>.peaks</code> file instead of {hourAudioMB} MB of audio. Pinch to zoom (Ctrl+scroll with a mouse); scroll sideways or drag to pan. <code>useZoom</code> adds these gestures, and <code>store.setView(start, end)</code> sets the visible range.</p>
-          <p class={ledeText}>Decoding and the <code>.peaks</code> format live in <code>@sillon/core</code>, which installs with <code>@sillon/react</code> and also works without React: make <code>.peaks</code> files with <code>Peaks.encode()</code>, or load peaks for your own drawing with <code>streamPeaks()</code>.</p>
+          <p class={ledeText}>This hour-long recording uses peaks prepared ahead of time: a {hourPeaksKB} kB <code>.peaks</code> file rather than {hourAudioMB} MB of audio. Pinch to zoom (Ctrl+scroll with a mouse); scroll sideways or drag to pan. <code>useZoom</code> handles those gestures, and <code>store.setView(start, end)</code> sets the visible range.</p>
+          <p class={ledeText}><code>@sillon/core</code> contains the decoder and the <code>.peaks</code> format. It installs with <code>@sillon/react</code> but works without React too: create <code>.peaks</code> files with <code>Peaks.encode()</code>, or load them for your own drawing with <code>streamPeaks()</code>.</p>
         </div>
         <Zoom client:only="react"><div slot="fallback" style="height: 300px" aria-hidden="true"></div></Zoom>
         <div class={demoCode}><div data-code set:html={highlight(ZOOM_JSX, 'tsx')} /></div>
@@ -212,7 +212,7 @@ const silSvg = 'size-full fill-track'
         <div class={lede}>
           <span class={chapterN}>{n(9)}</span>
           <h2 class={ledeTitle}>Recording</h2>
-          <p class={ledeText}><code>useRecorder</code> records from the microphone and returns peaks that fill in as you speak, so the waveform draws while you record. When you stop, it hands back the audio to play or upload, and the peaks are complete.</p>
+          <p class={ledeText}><code>useRecorder</code> records from the microphone and updates the peaks as you speak, so the waveform draws during recording. When you stop, it returns the audio for playback or upload and completes the peaks.</p>
         </div>
         <Recording client:only="react"><div slot="fallback" style="height: 190px" aria-hidden="true"></div></Recording>
         <div class={demoCode}><div data-code set:html={highlight(RECORD_JSX, 'tsx')} /></div>
