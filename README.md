@@ -91,17 +91,6 @@ Releases use [Changesets](https://github.com/changesets/changesets). `@sillon/co
 
 Publishing uses npm [trusted publishing](https://docs.npmjs.com/trusted-publishers) with [staged publishing](https://docs.npmjs.com/staged-publishing); see [SECURITY.md](SECURITY.md).
 
-### The first release
-
-npm attaches a trusted publisher only to a package that already exists, so each package is created once by hand, with a placeholder that holds no code. Every version with code is built and published by the release workflow.
-
-1. Create the `sillon` organization on npmjs.com (the `@sillon` scope).
-2. Publish the placeholders from `scripts/npm-placeholders` with your own login and 2FA (`npm login`, then `npm publish --access public` in `core/` and in `react/`). They're `0.0.0`, with a README and nothing else; no token is created.
-3. For each package on npmjs.com, under Settings → Trusted publishing, add GitHub Actions with repository `mattrothenberg/sillon`, workflow `release.yml` and environment `npm`, allowing staged publishing only (or `npm trust github … --env npm --allow-stage-publish`). Then set Publishing access to require 2FA and disallow tokens.
-4. In the GitHub repository, the `npm` environment requires a maintainer's approval and only deploys from `main`; `main` and the `@sillon/*` tags are protected by rulesets.
-5. Within two days (npm expires a trusted publisher that hasn't published), push to `main`. The release workflow stages 0.1.0 of both packages: approve the `npm` environment in GitHub, then each staged version on npm, `@sillon/core` first.
-6. Deprecate the placeholders: `npm deprecate @sillon/core@0.0.0 "Placeholder"` and the same for `@sillon/react`.
-
 ## Credits
 
 - The demo song is Aphex Twin's *Avril 14th*, with notes after Nicola Ariutti's [SuperCollider transcription](https://sccode.org/1-5d0), played by [Strudel](https://strudel.cc) and recorded with `scripts/strudel/render.mjs`. Strudel is only used to make the recording; none of it ships.
